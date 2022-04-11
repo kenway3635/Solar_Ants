@@ -1,0 +1,6 @@
+<launch>
+	<node pkg="serial_imu" name="imu_sonser_spec" type="serial_imu"/>
+		<!-- <remap from = "/imu/data" to = "/imu/data_raw"/> -->
+	<node pkg="serial_imu" name="sub_spec" type="sub_spec" />
+
+</launch>

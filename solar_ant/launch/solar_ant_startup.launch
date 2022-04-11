@@ -1,0 +1,62 @@
+<launch>
+
+        <!-- <arg name = "Driver_Port" default = "/dev/ttyUSB0" /> -->
+        <arg name = "Driver_Baud" default = "115200" />
+        <arg name = "bluetooth" default = "/dev/Bluetooth" />
+        <arg name = "control_hz" default = "20" />
+        <arg name = "Hokuyo_IP"   default = "192.168.44.10" />
+
+
+        <!-- <node pkg="willy_v2" type="willy_v2_base" name="willy_base" output="screen">
+                <param name="Baudrate" value="$(arg Driver_Baud)" />
+                <param name="Port" value="$(arg Driver_Port)" />
+        <param name="control_hz" value="$(arg control_hz)" />
+        </node> -->
+<!-- 
+        
+        <node pkg="willy_v2" type="willy_v2_encoder" name="willy_encoder" >
+                <param name="Baudrate" value="$(arg Driver_Baud)" />
+                <param name="Port" value="$(arg Driver_Port)" /> -->
+                <!-- <remap from = "/odom" to = "/odom_data"/> -->
+        <!-- </node> -->
+        <include file = "$(find willy_v2)/launch/willy_motor.launch" />
+        <include file = "$(find communication_develop)/launch/solar_ant1.launch" />
+        <!-- <node pkg="willy_v2" type="willy_v2_fault_detection" name="willy_v2_fault_detection"/> -->
+
+    <!-- <node pkg="willy" type="main.py" name="willy_UI" />     -->
+
+        <!-- <node pkg="urg_node" type="urg_node" name="urg_node" >
+                <param name="ip_address" value="$(arg Hokuyo_IP)" />
+                <param name="angle_min" value="-2"/>
+                <param name="angle_max" value="2"/>
+        </node> -->
+
+  <include file = "$(find rover_control)/launch/robot_control.launch" /> 
+
+        <!--node pkg="rqt_plot" name="plot_right_vel" type="rqt_plot" args=" /right_vel /left_vel"/               output="screen"     -->
+
+<!-- joy node -->
+	 <!--<node respawn="true" pkg="joy" type="joy_node" name="turtle_joy" >
+		<param name="dev" type="string" value="/dev/input/js0" />
+    		<param name="deadzone" value="0.1" />
+	</node>-->
+
+ <!-- Axes -->
+	<!--<param name="axis_linear" value="1" type="int"/>
+	<param name="axis_angular" value="0" type="int"/>
+  	<param name="scale_linear" value="0.8" type="double"/>
+  	<param name="scale_angular" value="0.5" type="double"/>
+  	<node pkg="joy_control" type="joy_control_node" name="joy_control">
+  	</node>-->
+
+
+        <!-- <node pkg="solar_ant" type="Data_Collect" name="Data_Collect">
+        </node> -->
+
+	<!--<node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+                <param name="baud" value="57600" />
+                <param name="port" value="/dev/ttyACM0" />
+	</node> -->
+
+        
+</launch>
