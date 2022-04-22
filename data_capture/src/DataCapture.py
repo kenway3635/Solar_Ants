@@ -2,57 +2,37 @@
 # -*- coding: utf-8 -*-
 
 import cv2
+import sys
 import numpy as np
 import pandas as pd
 import rospy
-from geometry_msgs.msg import Pose2D
-from geometry_msgs.msg import Twist
-class DataCapture():
-  def __init__(self):
-    self.vel_input=[]
-    self.odom=[]
-    self.image=[]
-  def vel_callback(self,data):
-    #rospy.loginfo(data.data)
-    print('linear=%f,angular=%f',data.linear.x,data.angular.z)
-    self.vel_input=[data.linear.x,data.angular.z]
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
 
+def start_node():
+    rospy.init_node('image_pub')
+    rospy.loginfo('image_pub node started')
 
-  def odom_callback(self,data):
-    #rospy.loginfo(data.data)
-    print('x=%f,y=%f,theta=%f',data.x,data.y,data.theta)
-    self.odom=[data.x,data.y,data.theta]
-    
-  def listener(self):
-    rospy.init_node('data_capture', anonymous=True)
-    rospy.Subscriber("cmd_vel", Twist, self.vel_callback)
-    rospy.Subscriber("pose2d", Pose2D, self.odom_callback)
-
-
-  def Image_to_1D(self,image):
-    image=cv2.resize(image,(128,128))
-    arr=np.array(image)
-    #print(arr.size)
-    arr_1d=np.reshape(arr,-1)
-    #np.append(arr_1d,'\n')
-    #print(arr_1d)
-    self.image=arr_1d
-
-if __name__ == '__main__':
-  DC=DataCapture()
-  DC.listener()
-  cap = cv2.VideoCapture(0)
-  while (True):
-    ret, frame = cap.read()
-    cv2.imshow('frame', frame)
-    DC.Image_to_1D(frame)
-    #write array to csv file
-    frame_1d=np.append(np.append(DC.image,DC.odom),DC.vel_input)
-    print (frame_1d)
-    pd.DataFrame(frame_1d).T.to_csv("data.csv", mode='a', header=True, index = False)
-    # 若按下 q 鍵則離開迴圈
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-      break
-  cap.release()
-  cv2.destroyAllWindows()
-  rospy.spin()
+cap = cv2.VideoCapture(0)
+# 設定影像的尺寸大小
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 128)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 128)
+#fps
+cap.set(cv2.CAP_PROP_FPS , 24)
+#set maxium buffer size
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 20)
+start_node()
+bridge = CvBridge()
+pub = rospy.Publisher('image', Image, queue_size=10)
+while (True):
+  ret, frame = cap.read()
+  cv2.imshow('frame', frame)
+  imgMsg = bridge.cv2_to_imgmsg(frame, encoding="passthrough")
+  pub.publish(imgMsg)
+  # 若按下 q 鍵則離開迴圈
+  if cv2.waitKey(1) & 0xFF == ord('q'):
+    break
+  rospy.Rate(10).sleep()  # 10 Hz
+cap.release()
+cv2.destroyAllWindows()
+rospy.spin()
