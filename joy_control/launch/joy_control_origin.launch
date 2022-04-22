@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+ <!-- joy node -->
+  <node respawn="true" pkg="joy"
+        type="joy_node" name="turtle_joy" >
+    <param name="dev" type="string" value="/dev/input/js0" />
+    <param name="deadzone" value="0.1" />
+  </node>
+
+ <!-- Axes -->
+  <param name="axis_linear" value="1" type="int"/>
+  <param name="axis_angular" value="0" type="int"/>
+  <param name="scale_linear" value="0.8" type="double"/>
+  <param name="scale_angular" value="0.5" type="double"/>
+  <node pkg="joy_control" type="joy_control_node" name="joy_control">
+    <remap from = "/cmd_vel" to = "/remote/cmd_vel"/>
+  </node>
+</launch>

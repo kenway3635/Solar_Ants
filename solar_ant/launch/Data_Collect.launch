@@ -1,0 +1,5 @@
+<launch>
+
+        <node pkg="solar_ant" type="Data_Collect" name="Data_Collect" output="screen" />
+
+</launch>

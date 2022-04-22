@@ -1,0 +1,31 @@
+mqtt:
+  client:
+    protocol: 4      # MQTTv311
+  connection:
+#    host: 192.168.0.140
+    host: localhost
+    port: 1883
+    keepalive: 60
+  private_path: device/001
+#serializer: json:dumps
+#deserializer: json:loads
+bridge:
+
+  # solar ant 
+
+  - factory: mqtt_bridge.bridge:MqttToRosBridge
+    msg_type: std_msgs.msg:String
+    topic_from: command
+    topic_to: /mqtt2ros
+    
+  - factory: mqtt_bridge.bridge:RosToMqttBridge
+    msg_type: std_msgs.msg:Float32
+    topic_from: /motor_vl
+    topic_to: Left_vel
+    
+  - factory: mqtt_bridge.bridge:RosToMqttBridge
+    msg_type: std_msgs.msg:Float32
+    topic_from: /motor_vr
+    topic_to: Right_vel
+    
+
