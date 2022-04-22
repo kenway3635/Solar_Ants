@@ -15,9 +15,10 @@ find_package(catkin REQUIRED COMPONENTS
 	message_runtime
 )
 
-find_package(Boost REQUIRED COMPONENTS 
-	signals
-)
+#find_package(Boost REQUIRED COMPONENTS 
+#	signals
+#)
+set(Boost_INCLUDE_DIRS /usr/include/boost)
 
 add_message_files(
     FILES
