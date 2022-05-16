@@ -62,8 +62,8 @@ void joy_control::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   
   else
   {
-    twist.angular.z = joy->axes[angular_];
-    twist.linear.x = joy->axes[linear_];
+    twist.angular.z =a_scale_*joy->axes[angular_];
+    twist.linear.x = l_scale_*joy->axes[linear_];
   }
   vel_pub_.publish(twist);
 

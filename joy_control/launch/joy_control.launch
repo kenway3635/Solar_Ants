@@ -10,8 +10,8 @@
  <!-- Axes -->
   <param name="axis_linear" value="1" type="int"/>
   <param name="axis_angular" value="0" type="int"/>
-  <param name="scale_linear" value="1" type="double"/>
-  <param name="scale_angular" value="1" type="double"/>
+  <param name="scale_linear" value="0.1" type="double"/>
+  <param name="scale_angular" value="0.15" type="double"/>
   <node pkg="joy_control" type="joy_control_node" name="joy_control">
     <remap from="cmd_vel" to="new_cmd_vel" />
   </node>
