@@ -59,7 +59,7 @@ if __name__ == '__main__':
   DC.listener()
   start = False
   i = 0 #time stamp
-  total = []
+  total = None
   while not rospy.is_shutdown():
     frame=DC.raw_image
     #cv2.imshow('frame', frame)
@@ -77,7 +77,10 @@ if __name__ == '__main__':
         np.save('train',total)
     if start:
       i=i+1
-      total = np.append(total,frame_1d)
+      if i==1 :
+        total = frame_1d
+      else:
+        total = np.vstack((total,frame_1d))
     # 若按下 q 鍵則離開迴圈
   rospy.spin()
   cv2.destroyAllWindows()
