@@ -18,7 +18,7 @@ private:
 
   int linear_, angular_;
   double l_scale_, a_scale_;
-  ros::Publisher vel_pub_, mode_pub,elevator_arrived_pub,floor_pub,click_pub;
+  ros::Publisher vel_pub_, mode_pub,elevator_arrived_pub,floor_pub,click_pub,brush_pub;
   ros::Subscriber joy_sub_;
 
 };
@@ -38,6 +38,7 @@ joy_control::joy_control():
   vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
   elevator_arrived_pub = nh_.advertise<std_msgs::Int32>("/next_goal", 1,true);
   click_pub=nh_.advertise<std_msgs::Bool>("click",1);
+  brush_pub=nh_.advertise<std_msgs::Bool>("brush_switch",1);
 
   joy_sub_ = nh_.subscribe<sensor_msgs::Joy>("joy", 10, &joy_control::joyCallback, this);
 
@@ -49,6 +50,7 @@ void joy_control::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   std_msgs::Int32 mode,go;
   std_msgs::String floor;
   std_msgs::Bool button;
+  std_msgs::Bool brush;
   if (joy->buttons[4])
   {
     twist.angular.z = a_scale_*joy->axes[angular_];
@@ -67,7 +69,18 @@ void joy_control::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
   }
   vel_pub_.publish(twist);
 
-  
+  if (abs(joy->axes[7])==1)
+  {
+    if (joy->axes[7]>0)
+    {
+      brush.data=true;
+    }
+    else if (joy->axes[7]<0)
+    {
+      brush.data=false;
+    }
+    brush_pub.publish(brush);
+  }
 
   if (joy->buttons[1])
   {
