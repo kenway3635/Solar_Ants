@@ -65,11 +65,11 @@ ros::Rate r(20);
 while (ros::ok())
   {
     slip_ratio=abs(odom_omega-imu_omega);
-    VR = linear_vel + angular_vel * Wheel_Base;
-    VL = linear_vel - angular_vel  * Wheel_Base;
+    VR = linear_vel*0.3 + angular_vel * Wheel_Base;
+    VL = linear_vel*0.3 - angular_vel  * Wheel_Base;
     // if (slip_ratio>0.5)//single wheel mode
     // {
-    //  if(VR*VL<0)
+   //   if(VR*VL<0)
     //  {
     //    if(VR<0){VR=0;VL=VL*2;}
     //    else if(VL<0){VL=0;VR=VR*2;}

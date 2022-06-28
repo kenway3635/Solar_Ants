@@ -359,7 +359,7 @@ int willy_motor::Serial_set(int Baudrate, std::string Port, int Parity)
 
 int willy_motor::calculate_cmd(int v)
 {
-	int upper_lim=3150,lower_lim=80;
+	int upper_lim=3000,lower_lim=80;
 	if (stop_l)//emergency stop
 	{
 		send_cmd_single(ID_1, 0x007D, 0b0000000000001010);

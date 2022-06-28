@@ -53,10 +53,12 @@
         <!-- <node pkg="solar_ant" type="Data_Collect" name="Data_Collect">
         </node> -->
 
-	<!--<node pkg="rosserial_python" type="serial_node.py" name="serial_node">
+	<node pkg="rosserial_python" type="serial_node.py" name="serial_node">
                 <param name="baud" value="57600" />
                 <param name="port" value="/dev/ttyACM0" />
-	</node> -->
+	</node>
+	<node pkg ="data_capture" type="DataCapture.py" name="image_pub">
+	</node>
 
         
 </launch>
