@@ -40,7 +40,7 @@ State = [False,False,0]  #-->初始化視覺state
 Uturn_flag=0 # -->初始化轉向標記  偶數代表接下來要左U-turn,奇數為右Uturn
 kernel = np.ones((7,7),np.uint8)
 height = 360
-width=480
+width=640
 margin = int(0.2*width)
 imuData =0
 
@@ -79,13 +79,14 @@ def Uturn():
      # angle when call the Uturn funtion
     now_imu = imu_theta
     while True:
+        print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
         if angleDisplacement >= 85 and angleDisplacement <= 275:
             break
         vel.linear.x = 0
         vel.angular.z = flag * 0.2
         velPublisher.publish(vel)
-        rospy.loginfo("angle_displacement: %2.1f",angleDisplacement)
+        rospy.loginfo("first,angle_displacement: %2.1f",angleDisplacement)
         
     vel.linear.x =0
     vel.angular.z = 0 
@@ -93,26 +94,28 @@ def Uturn():
      #------------------ step3. Slide
     now_imu = imu_y
     while True:
+        print(imu_y)
         if abs(now_imu - imu_y) >0.05:
             break
-        vel.linear.x = 0.04
+        vel.linear.x = 0.07
         vel.angular.z = 0 
         velPublisher.publish(vel)
     #----------------- step4. turn
     now_imu =imu_theta
     while True:
+        print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
         if angleDisplacement >= 85 and angleDisplacement <= 275:
             break
         vel.linear.x = 0
         vel.angular.z = flag * 0.2
         velPublisher.publish(vel)
-        rospy.loginfo("angle_displacement: %2.1f",angleDisplacement)
+        rospy.loginfo("second angle_displacement: %2.1f",angleDisplacement)
     rospy.loginfo("Uturn complete ! ,return to visual motion after 2 seconds")
     vel.linear.x =0
     vel.angular.z = 0 
     velPublisher.publish(vel)
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(3)
     Uturn_flag +=1
     assert cap.isOpened() , "camera open error"
 
@@ -121,7 +124,7 @@ def Move(State):
     flag = lambda Uturn_flag : 1 if Uturn_flag%2  == 0 else -1 
     flag =flag(Uturn_flag)
     if State[0] == 0 and State[1] == 0: #前後皆沒有偵測到物體-->直走
-        vel.linear.x = 0.06
+        vel.linear.x = 0.1
         vel.angular.z = 0 
         velPublisher.publish(vel)
         rospy.loginfo("Go forward")
@@ -138,22 +141,24 @@ def Move(State):
     elif State[0] ==0 and State[1] ==1: # 後方偵測到了
         if abs(State[2]) <= 5: # 當後方角度小於10度的時候可以繼續動
             
-            vel.linear.x =0.08
+            vel.linear.x =0.1
             vel.angular.z = 0
             velPublisher.publish(vel)
-        elif State[2] < -5:
-            vel.linear.x =0.04
+        elif State[2] < -6:
+            vel.linear.x =0.08
             vel.angular.z = -flag*0.05
             velPublisher.publish(vel)
             rospy.loginfo("detect angle diff , compensation: Right turn")
-        elif State[2] > 5:
-            vel.linear.x =0.04
+        elif State[2] > 6:
+            vel.linear.x =0.08
             vel.angular.z = flag*0.05
             velPublisher.publish(vel)
             rospy.loginfo("detect angle diff , compensation: Left turn")
 
 # 檢查相機啟動
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(3)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
 if not cap.isOpened(): 
     rospy.loginfo("camera error")
     raise BaseException("camera error")
@@ -177,27 +182,28 @@ while cap.isOpened():
     ret,frame = cap.read()
     State = "visual function off "
     #print(mtx)
-    frame = cv2.undistort(frame, mtx, dist, None, None)
+    #frame = cv2.undistort(frame, mtx, dist, None, None)
     IMG = cv2.resize(frame,(width,height))
     #print(visual_sw)
     if visual_sw:
+    #if 1 :
         image_back , image_front = preProcessing(IMG,height,width)
         detect_front=area_detect(image_front)
         detect_back,back_angle = line_detect(image_back)
         State = [detect_front,detect_back,back_angle]
-        
+        #print(State)
         Move(State)
     else:
         rospy.loginfo(State)
-    output_img.write(IMG)
+    #output_img.write(IMG)
     cv2.imshow("frame",IMG)
     
-    if cv2.waitKey(20) &0xFF == ord("q"):
+    if cv2.waitKey(100) &0xFF == ord("q"):
         break
 print("end")
 #except:
 #   rospy.loginfo("visual function error")
     
 cap.release()
-output_img.release()
+#output_img.release()
 cv2.destroyAllWindows()

@@ -37,13 +37,13 @@ pub = rospy.Publisher('image', Image, queue_size=5)
 while (True):
   ret, frame = cap.read()
   frame=cv2.resize(frame,(128,128))
-  #cv2.imshow('frame', frame)
+  cv2.imshow('frame', frame)
   imgMsg = cv2_to_imgmsg(frame)
   pub.publish(imgMsg)
   # 若按下 q 鍵則離開迴圈
   if cv2.waitKey(1) & 0xFF == ord('q'):
     break
-  rospy.Rate(3).sleep()  # 10 Hz
+  rospy.Rate(10).sleep()  # 10 Hz
 cap.release()
 cv2.destroyAllWindows()
 rospy.spin()

@@ -11,7 +11,7 @@ def init():
     kernel_area = np.ones((7,7),np.uint8)
     kernel_line = np.ones((3,3),np.uint8)
     height = 360
-    width=640
+    width=480
     margin = int(0.1*width) #--
     #IMG = cv2.resize(cap,(width,height))
 
@@ -38,25 +38,23 @@ def preProcessing(image,height,width) :
    
 
 #for the brake 
-def area_detect(image,maxThresh=20000):
+def area_detect(image,maxThresh=10000):
     
     detectable = False
     gray_scale = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     gray_scale = cv2.GaussianBlur(gray_scale,(5,5),0)
-    #ret,thresh =cv2.threshold(gray_scale,0,255,cv2.THRESH_OTSU)
-    ret,thresh =cv2.threshold(gray_scale,100,255,cv2.THRESH_BINARY)
-    binary = cv2.morphologyEx(thresh,cv2.MORPH_OPEN,kernel_area,iterations=1)
-    contour , hie = cv2.findContours(binary,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    ret,thresh =cv2.threshold(gray_scale,0,255,cv2.THRESH_OTSU)
+    binary = cv2.morphologyEx(thresh,cv2.MORPH_OPEN,kernel_area,iterations=3)
+    ret,contour , hie = cv2.findContours(binary,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     #cv2.imshow("area",binary)
-    area = 0
     for c in contour:
         M = cv2.moments(c)
         cX = int(M["m10"]/(M["m00"]+0.001))
         cY = int(M["m01"]/(M["m00"]+0.001))
-        area = max(area,cv2.contourArea(c))
-        print(area)
-    if area>=maxThresh:
-        detectable = True
+        area = cv2.contourArea(c)
+        #print(area)
+        if area>=maxThresh:
+            detectable = True
     return detectable
 def line_detect(image,minlineLength=130,maxlineGap=18):
     length,angle = 0,0

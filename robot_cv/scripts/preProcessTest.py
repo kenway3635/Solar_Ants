@@ -10,7 +10,7 @@ def init():
     kernel_area = np.ones((7,7),np.uint8)
     kernel_line = np.ones((3,3),np.uint8)
     height = 360
-    width=480
+    width=640
     margin = int(0.1*width)
     #IMG = cv2.resize(cap,(width,height))
 def preProcessing(image,height,width):
@@ -21,24 +21,26 @@ def preProcessing(image,height,width):
     img_back = img[:,:margin]
     img_front = img[:,-margin:]
     return img_back,img_front 
-def area_detect(image,maxThresh=558000):
+def area_detect(image,maxThresh=20000):
     
     detectable = False
     gray_scale = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     gray_scale = cv2.GaussianBlur(gray_scale,(3,3),0)
-    ret,thresh =cv2.threshold(gray_scale,0,255,cv2.THRESH_OTSU)
+    #ret,thresh =cv2.threshold(gray_scale,0,255,cv2.THRESH_OTSU)
+    ret,thresh =cv2.threshold(gray_scale,100,255,cv2.THRESH_BINARY)
     binary = cv2.morphologyEx(thresh,cv2.MORPH_OPEN,kernel_area,iterations=1)
     #ret,contour , hie = cv2.findContours(binary,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-    ret,contour , hie = cv2.findContours(binary,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    contour,hie = cv2.findContours(binary,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     cv2.imshow("area",binary)
+    area = 0 
     for c in contour:
         M = cv2.moments(c)
         cX = int(M["m10"]/(M["m00"]+0.001))
         cY = int(M["m01"]/(M["m00"]+0.001))
-        area = cv2.contourArea(c)
-        #print(area)
-        if area>=maxThresh:
-            detectable = True
+        area = max(area,cv2.contourArea(c)) 
+    print("Area = ",area)
+    if area>=maxThresh:
+        detectable = True
     return detectable
 def line_detect(image,minlineLength=130,maxlineGap=18):
     length,angle = 0,0
@@ -61,7 +63,7 @@ def line_detect(image,minlineLength=130,maxlineGap=18):
             if length_buffer > length:
                 length = length_buffer
                 edgePoint = [x1,y1,x2,y2]
-        print(edgePoint)
+        #print(edgePoint)
 
         cv2.line(image,(edgePoint[0],edgePoint[1]),(edgePoint[2],edgePoint[3]),(0,225,0),2)
         angle = math.atan2( x2-x1 , abs(y2-y1)) *57.3
@@ -85,14 +87,16 @@ dist = np.array( [ -3.3489097336487306e-01, 1.2821145903063155e-01,
 mtx = np.array([ 3.0301263272855510e+02, 0., 3.0541949445278198e+02, 0.,
        3.0253583660053522e+02, 2.3129592501103573e+02, 0., 0., 1. ])
 mtx = np.resize(mtx,(3,3))
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(3)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
 assert cap.isOpened() ,"cap error"
 
 while cap.isOpened():
     t_start = time.time()
     ret,frame = cap.read()
 
-    frame = cv2.undistort(frame, mtx, dist, None, None)
+    #frame = cv2.undistort(frame, mtx, dist, None, None)
     IMG = cv2.resize(frame,(width,height))
     image_back , image_front = preProcessing(IMG,height,width)
     detect_front=area_detect(image_front)
@@ -102,11 +106,11 @@ while cap.isOpened():
     print(State)
     cv2.imshow("frame",IMG)
     t_end1 = time.time()
-    if cv2.waitKey(200) &0xFF == ord("q"):
+    if cv2.waitKey(150) &0xFF == ord("q"):
         print("end")
         break
     t_end2 = time.time()
-    print(t_end1 - t_start)
-    print(t_end2 - t_start)
+    #print(t_end1 - t_start)
+    #print(t_end2 - t_start)
 cap.release()
 cv2.destroyAllWindows()
