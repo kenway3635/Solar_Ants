@@ -142,11 +142,11 @@ while (ros::ok())
       {
         ROS_INFO("cliff  detected!!, press any button to continue, will switch to manual mode");
         stop.data=true;
-        new_vel.linear.x = 0;
-        new_vel.angular.z= 0;
+        //new_vel.linear.x = 0;
+        //new_vel.angular.z= 0;
         if(button)
         {
-          button_reg=1;
+          //button_reg=1;
           stop.data=false;
         }
       }

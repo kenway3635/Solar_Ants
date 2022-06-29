@@ -165,7 +165,7 @@ include_directories(
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 catkin_install_python(PROGRAMS scripts/Solar_visualControl.py scripts/cvTest.py
-  scripts/Solar_visualControl_v2.py scripts/preProcessTest.py scripts/Solar_visualControl_v3.py
+  scripts/Solar_visualControl_v2.py scripts/preProcessTest.py scripts/Solar_visualControl_v5.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 ## Mark executables for installation
