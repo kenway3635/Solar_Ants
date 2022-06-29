@@ -138,15 +138,16 @@ while (ros::ok())
   {
     //ROS_INFO("button_reg= %d",button_reg);
     //ROS_INFO("x= %f, y=%f, theta=%f",x,y,theta);
+    /*
     if (((FL==true)||(FR==true)||(BL==true)||(BR==true))&&(button_reg==0))//cliff stop state
       {
         ROS_INFO("cliff  detected!!, press any button to continue, will switch to manual mode");
         stop.data=true;
-        //new_vel.linear.x = 0;
-        //new_vel.angular.z= 0;
+        new_vel.linear.x = 0;
+        new_vel.angular.z= 0;
         if(button)
         {
-          //button_reg=1;
+          button_reg=1;
           stop.data=false;
         }
       }
@@ -156,7 +157,7 @@ while (ros::ok())
        {
         button_reg=0;
        }
-      
+    */
       if(mode == 99)//stop AMR
       {
         stop.data=true;
@@ -338,7 +339,7 @@ while (ros::ok())
         new_vel.angular.z=0;
       }
 
-    }
+  //}
     
   vel_pub.publish(new_vel);
   cmd_stop.publish(stop);

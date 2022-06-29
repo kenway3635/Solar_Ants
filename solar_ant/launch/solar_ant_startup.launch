@@ -20,7 +20,7 @@
                 <!-- <remap from = "/odom" to = "/odom_data"/> -->
         <!-- </node> -->
         <include file = "$(find willy_v2)/launch/willy_motor.launch" />
-        <include file = "$(find communication_develop)/launch/solar_ant1.launch" />
+        <!-- <include file = "$(find communication_develop)/launch/solar_ant1.launch" /> -->
         <!-- <node pkg="willy_v2" type="willy_v2_fault_detection" name="willy_v2_fault_detection"/> -->
 
     <!-- <node pkg="willy" type="main.py" name="willy_UI" />     -->
