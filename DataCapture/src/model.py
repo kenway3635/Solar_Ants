@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class CNN_ODOM_Model(nn.Module):
     def __init__(self, input_dim):
-        super(My_Model, self).__init__()
+        super(CNN_ODOM_Model, self).__init__()
         #apply image argumention
         
         if self.training == True:
