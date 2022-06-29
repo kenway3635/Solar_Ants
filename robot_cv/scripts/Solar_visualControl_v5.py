@@ -100,7 +100,7 @@ def Uturn():
     velPublisher.publish(vel)
     while True:
         print(imu_y)
-        if abs(now_imu - imu_y) >0.05:
+        if abs(now_imu - imu_y) >0.08:
             break
     vel.linear.x =0
     vel.angular.z = 0 
@@ -134,7 +134,7 @@ def Move(State):
     flag = lambda Uturn_flag : 1 if Uturn_flag%2  == 0 else -1 
     flag =flag(Uturn_flag)
     if State[0] == 0 and State[1] == 0: #前後皆沒有偵測到物體-->直走
-        vel.linear.x = 0.1
+        vel.linear.x = 0.12
         vel.angular.z = 0 
         velPublisher.publish(vel)
         rospy.loginfo("Go forward")
@@ -181,7 +181,7 @@ angleSubscribe =rospy.Subscriber("/pose2d",Pose2D,angleRecoder,queue_size=1)
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 name=str(datetime.datetime.now())
 
-output_img = cv2.VideoWriter("ww.avi",fourcc,15.0,(width,height))
+#output_img = cv2.VideoWriter("ww.avi",fourcc,15.0,(width,height))
 #output_img = cv2.VideoWriter("aaa.avi",fourcc,15.0,(width,height))
 #try:
 rospy.loginfo("start")
