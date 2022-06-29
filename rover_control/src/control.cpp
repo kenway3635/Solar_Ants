@@ -41,8 +41,8 @@ void Mode(const std_msgs::Int32::ConstPtr& msg)
 
  void Cam_velCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
- cam_vel_x=msg->linear.x;
- cam_ang_z=msg->angular.z;
+ cam_vel_x=0.2*msg->linear.x;
+ cam_ang_z=0.5*msg->angular.z;
 }
 
  void clickCallback(const std_msgs::Bool::ConstPtr& msg)
