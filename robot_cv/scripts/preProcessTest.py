@@ -27,7 +27,7 @@ def area_detect(image,maxThresh=20000):
     gray_scale = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     gray_scale = cv2.GaussianBlur(gray_scale,(3,3),0)
     #ret,thresh =cv2.threshold(gray_scale,0,255,cv2.THRESH_OTSU)
-    ret,thresh =cv2.threshold(gray_scale,100,255,cv2.THRESH_BINARY)
+    ret,thresh =cv2.threshold(gray_scale,60,255,cv2.THRESH_BINARY)
     binary = cv2.morphologyEx(thresh,cv2.MORPH_OPEN,kernel_area,iterations=1)
     #ret,contour , hie = cv2.findContours(binary,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     contour,hie = cv2.findContours(binary,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)

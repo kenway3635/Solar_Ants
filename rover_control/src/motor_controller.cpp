@@ -76,11 +76,17 @@ while (ros::ok())
     //  }
     // }
 
-  //  if(VR*VL<0)
-  //{
-  //  if(VR<0)VR=0;
-  //  else if(VL<0)VL=0;
-  //}
+    if(VR*VL<0)
+    {
+    if(VR<0)
+      {
+        VR=0.5*VR;
+      }
+    else if(VL<0)
+      {
+        VL=0.5*VL;
+      }
+    }
    std_msgs::Int32MultiArray cmd;
    std_msgs::Float64 slip_value,tilt_value;
 

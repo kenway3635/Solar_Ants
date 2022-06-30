@@ -43,7 +43,7 @@ while (True):
   # 若按下 q 鍵則離開迴圈
   if cv2.waitKey(1) & 0xFF == ord('q'):
     break
-  rospy.Rate(10).sleep()  # 10 Hz
+  rospy.Rate(20).sleep()  # 10 Hz
 cap.release()
 cv2.destroyAllWindows()
 rospy.spin()

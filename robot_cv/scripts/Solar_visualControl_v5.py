@@ -79,12 +79,12 @@ def Uturn():
      # angle when call the Uturn funtion
     now_imu = imu_theta
     vel.linear.x = 0
-    vel.angular.z = flag * 0.2
+    vel.angular.z = flag * 0.12
     velPublisher.publish(vel)
     while True:
         print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
-        if angleDisplacement >= 85 and angleDisplacement <= 275:
+        if angleDisplacement >= 60 and angleDisplacement <= 300:
             break
         rospy.loginfo("first,angle_displacement: %2.1f",angleDisplacement)
         
@@ -95,12 +95,12 @@ def Uturn():
     time.sleep(0.5)
      #------------------ step3. Slide
     now_imu = imu_y
-    vel.linear.x = 0.07
+    vel.linear.x = 0.12
     vel.angular.z = 0 
     velPublisher.publish(vel)
     while True:
         print(imu_y)
-        if abs(now_imu - imu_y) >0.08:
+        if abs(now_imu - imu_y) >0.03:
             break
     vel.linear.x =0
     vel.angular.z = 0 
@@ -109,13 +109,13 @@ def Uturn():
     #----------------- step4. turn
     now_imu =imu_theta
     vel.linear.x = 0
-    vel.angular.z = flag * 0.2
+    vel.angular.z = flag * 0.12
     velPublisher.publish(vel)
     
     while True:
         print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
-        if angleDisplacement >= 85 and angleDisplacement <= 275:
+        if angleDisplacement >= 60 and angleDisplacement <= 300:
             break
         rospy.loginfo("second angle_displacement: %2.1f",angleDisplacement)
 
@@ -134,7 +134,7 @@ def Move(State):
     flag = lambda Uturn_flag : 1 if Uturn_flag%2  == 0 else -1 
     flag =flag(Uturn_flag)
     if State[0] == 0 and State[1] == 0: #前後皆沒有偵測到物體-->直走
-        vel.linear.x = 0.12
+        vel.linear.x = 0.3
         vel.angular.z = 0 
         velPublisher.publish(vel)
         rospy.loginfo("Go forward")
@@ -149,19 +149,21 @@ def Move(State):
         Uturn()
         
     elif State[0] ==0 and State[1] ==1: # 後方偵測到了
-        if abs(State[2]) <= 5: # 當後方角度小於10度的時候可以繼續動
+        if abs(State[2]) <= 3: # 當後方角度小於10度的時候可以繼續動
             
-            vel.linear.x =0.1
+            vel.linear.x =0.3
             vel.angular.z = 0
             velPublisher.publish(vel)
-        elif State[2] < -6:
-            vel.linear.x =0.08
-            vel.angular.z = -flag*0.05
+        elif State[2] < -3:
+            vel.linear.x =0.1
+            #vel.angular.z = -flag*0.05
+            vel.angular.z = -0.1
             velPublisher.publish(vel)
             rospy.loginfo("detect angle diff , compensation: Right turn")
-        elif State[2] > 6:
-            vel.linear.x =0.08
-            vel.angular.z = flag*0.05
+        elif State[2] > 3:
+            vel.linear.x =0.1
+            #vel.angular.z = flag*0.05
+            vel.angular.z = 0.1
             velPublisher.publish(vel)
             rospy.loginfo("detect angle diff , compensation: Left turn")
 
@@ -190,7 +192,7 @@ while cap.isOpened():
     # Control flow start
     # rospy.loginfo("start2")
     ret,frame = cap.read()
-    State = "visual function off "
+    # State = "visual function off "
     #print(mtx)
     #frame = cv2.undistort(frame, mtx, dist, None, None)
     IMG = cv2.resize(frame,(width,height))
