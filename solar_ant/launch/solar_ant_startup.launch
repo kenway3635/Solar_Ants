@@ -50,8 +50,7 @@
   	</node>-->
 
 
-        <!-- <node pkg="solar_ant" type="Data_Collect" name="Data_Collect">
-        </node> -->
+       <node name="cap_node" pkg="data_capture" type="image_pub.py" /> 
 
 	<node pkg="rosserial_python" type="serial_node.py" name="serial_node">
                 <param name="baud" value="57600" />
