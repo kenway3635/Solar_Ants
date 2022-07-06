@@ -18,7 +18,7 @@ class DataCapture():
     self.image=[]
     self.imu =[]
     self.bridge=CvBridge()
-    self.raw_image= np.array((180,320,3), dtype=np.uint8)
+    self.raw_image= np.array((180,320,3), dtype=np.uint32)
     self.button = np.zeros(2)
 
   def vel_callback(self,data):
@@ -43,7 +43,7 @@ class DataCapture():
   
 
   def img_callback(self,data):
-    self.raw_image=self.bridge.imgmsg_to_cv2(data,desired_encoding='passthrough')
+    self.raw_image=cv2.resize(self.bridge.imgmsg_to_cv2(data,desired_encoding='passthrough'),(320,180))
     #cv2.imshow("Image window", self.raw_image)
     #cv2.waitKey(0)
 
@@ -56,7 +56,7 @@ class DataCapture():
     rospy.Subscriber("imu/data_raw",Imu,self.imu_callback)
 
   def Image_to_1D(self,image):
-    #image=cv2.resize(image,(128,128))
+    #image=cv2.resize(image,(320,180))
     arr=np.array(image)
     #print(arr.size)
     arr_1d=np.reshape(arr,-1)

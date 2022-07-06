@@ -103,7 +103,7 @@ float PID(float err,float Last_err,float kp,float ki,float kd,float upper_lim,fl
   return u;
 }
 
-float Check_minimum(float velocity)
+float Check_minimum(float velocity)//check minimum of the input command
 {
    if (abs(velocity)<0.12)
             {
@@ -133,12 +133,14 @@ mode_sub=n.subscribe("/Mode",1,Mode);
 click_sub=n.subscribe("click",1,clickCallback);
 odom_sub = n.subscribe("odom", 1, odomCallback);
 pub_pose = n.advertise<geometry_msgs::Pose2D>("pose2d", 10);
+//---params for odom+imu path planning---//
 int state =1;
 float length=0.7;
 float wide = 0.1;
 float error_x,error_y,error_theta;
 float error_linear_thresh=0.05;
 float error_angular_thresh=0.1;
+//---------------------------------------
 ros::Time::init();
 ros::Rate r(10);
 float last_linear_vel=0;//save last velocity value for recovery
@@ -146,7 +148,7 @@ float last_angular_vel=0;
 
 while (ros::ok())
   {
-      if(mode == 99)//stop AMR
+      if(mode == 99)//emergency stop AMR
       {
         stop.data=true;
         ROS_INFO("Stop!");
@@ -163,15 +165,15 @@ while (ros::ok())
         }
         else if (mode ==0)
         {
-        if ((cam_vel_x != 0) || (cam_ang_z != 0))
-          {
-          last_linear_vel=cam_vel_x;
-          last_angular_vel=cam_ang_z;
-          }
+          if ((cam_vel_x != 0) || (cam_ang_z != 0))
+            {
+            last_linear_vel=cam_vel_x;
+            last_angular_vel=cam_ang_z;
+            }
         }
         //ROS_INFO("velocity is %f,  %f",last_linear_vel,last_angular_vel);
 
-        if ((FL==true)||(FR==true)||(BL==true)||(BR==true))//cliff stop state
+        if ((FL==true)||(FR==true)||(BL==true)||(BR==true))//cliff detected
           {
             ROS_INFO("cliff  detected!!, doing self recovery");
             //stop.data=true;
@@ -179,41 +181,33 @@ while (ros::ok())
             last_angular_vel = Check_minimum(last_angular_vel);
             if((FL==true)&&(BL==true))
             {
-              ROS_INFO("3");
               last_linear_vel=0;
               if(last_angular_vel<0)
               {
-                ROS_INFO("Bug_3");
                 last_angular_vel=last_angular_vel*-1;
               }
             }
             else if((FR==true)&&(BR==true))
             {
-              ROS_INFO("4");
               last_linear_vel=0;
               if(last_angular_vel>0)
               {
-                ROS_INFO("Bug_4");
                 last_angular_vel=last_angular_vel*-1;
               }
             }
             else if ((FL==true)||(FR==true))
             {
-              ROS_INFO("1");
               last_angular_vel =0;
               if (last_linear_vel<0)
               {
-                ROS_INFO("Bug_1");
                 last_linear_vel=last_linear_vel*-1;
               }
             }
             else if((BL==true)||(BR==true))
             { 
-              ROS_INFO("2");
               last_angular_vel=0;
               if(last_linear_vel>0)
               {
-                ROS_INFO("Bug_2");
                 last_linear_vel=last_linear_vel*-1;
               }
             }
@@ -396,7 +390,6 @@ while (ros::ok())
     }
     
   vel_pub.publish(new_vel);
-  ROS_INFO("velocity is %f,  %f, stop data is %d",last_linear_vel,last_angular_vel,stop.data);
   cmd_stop.publish(stop);
   ros::spinOnce();
   r.sleep();

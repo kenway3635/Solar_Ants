@@ -52,14 +52,6 @@ add_executable(willy_v2_encoder src/willy_encoder.cpp)
 target_link_libraries(willy_v2_encoder ${catkin_LIBRARIES})
 add_dependencies(willy_v2_encoder willy_v2_generate_messages_cpp)
 
-add_executable(willy_v2_base src/willy_base_main.cpp src/willy_base_v2.cpp)
-target_link_libraries(willy_v2_base ${catkin_LIBRARIES})
-add_dependencies(willy_v2_base willy_v2_generate_messages_cpp)
-
-add_executable(willy_v2_fault_detection src/willy_fault_detection.cpp)
-target_link_libraries(willy_v2_fault_detection ${catkin_LIBRARIES})
-add_dependencies(willy_v2_fault_detection willy_v2_generate_messages_cpp)
-
 add_executable(willy_motor_left src/willy_motor_left.cpp)
 target_link_libraries(willy_motor_left ${catkin_LIBRARIES})
 add_dependencies(willy_motor_left willy_v2_generate_messages_cpp)
