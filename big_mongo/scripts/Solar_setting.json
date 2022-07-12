@@ -1,0 +1,15 @@
+{
+    "DataBase": "Solar_test" ,
+    "Collection_list": 
+    [
+        "status_info","velocity_cmd" 
+    ],
+    "ROS_TOPIC_list":
+    [
+    { "Topic_name":"/back_left_ir" , "msg_type":"std","data_class": "Bool", "quene_size": 10 , "collection":"status_info" },
+    { "Topic_name":"/back_right_ir" , "msg_type":"std","data_class": "Bool", "quene_size": 10 , "collection":"status_info" },
+    { "Topic_name":"/front_left_ir" , "msg_type":"std","data_class": "Bool", "quene_size": 10 , "collection":"status_info" },
+    {"Topic_name":"/front_right_ir" , "msg_type":"std","data_class": "Bool", "quene_size": 10 , "collection":"status_info" }
+    ]
+
+}
