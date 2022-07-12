@@ -1,0 +1,4 @@
+<launch>
+<node name="cap_node" pkg="data_capture" type="image_pub.py" output="screen"/> 
+<node name="to_npy" pkg="data_capture" type="to_npy.py" output="screen"/>
+</launch>
