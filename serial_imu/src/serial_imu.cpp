@@ -116,13 +116,13 @@ int main(int argc, char** argv)
 			if(num > 0)
 			{
 				imu_data.header.stamp = ros::Time::now();
-				imu_data.header.frame_id = "base_link";
+				imu_data.header.frame_id = "imu_link";
 
 				imu_0x91_msg.header.stamp = ros::Time::now(); 
-				imu_0x91_msg.header.frame_id = "base_0x91_link";
+				imu_0x91_msg.header.frame_id = "imu_0x91_link";
 
 				imu_0x62_msg.header.stamp = ros::Time::now();
-				imu_0x62_msg.header.frame_id = "base_0x62_link";
+				imu_0x62_msg.header.frame_id = "imu_0x62_link";
 
 				for (int i = 0; i < num; i++)
 				{

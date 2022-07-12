@@ -50,7 +50,7 @@
   	</node>-->
 
 
-        <node name="cap_node" pkg="data_capture" type="image_pub.py" output="screen"/> 
+        <node name="cap_node" pkg="end_2_end" type="image_pub.py" output="screen"/> 
 
 	<node pkg="rosserial_python" type="serial_node.py" name="serial_node">
                 <param name="baud" value="57600" />
