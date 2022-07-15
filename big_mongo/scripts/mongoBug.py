@@ -1,9 +1,9 @@
 #-*- coding:UTF-8 -*- 
 import rospy ,os ,time ,json,sys
 from pymongo import MongoClient 
-from std_msgs.msg import String,Int64 ,Int16 , Int32,Bool
+from std_msgs.msg import String,Int64 ,Int16 , Int32, Bool
 from geometry_msgs.msg import Twist
-from big_mongo.mongoWriter import MongoWriter 
+#from big_mongo.mongoWriter import MongoWriter 
 from pathlib import Path
 class MongoBug() : 
     
@@ -15,12 +15,12 @@ class MongoBug() :
         self.ROS_topic = None
         self.setting() 
         self.dataClass = {
-            "String":String , "Int64":Int64 , "Int16":Int16 , "Int32":Int32 , "Twist":Twist,"Bool":Bool
+            "String":String , "Int64":Int64 , "Int16":Int16 , "Int32":Int32 , "Twist":Twist,"Bool":Bool 
         }
         self.msg_class_forWrite = {
             #"std":self.write_std  , "geometry":self.write_geometry
-            "std":MongoWriter.write_std , 
-            "geometry":MongoWriter.write_geometry 
+            "std":self.write_std,
+            "geometry":self.write_geometry
         }
         
     # 打開設定,讀取setting file內的資料庫名稱, 使用的資料庫collection names,以及要紀錄的rostopic name
@@ -42,12 +42,41 @@ class MongoBug() :
     def register(self): 
         rospy.init_node("Ros_mongo",anonymous=True)
         for topic in self.ROS_topic: 
+            print(topic)
+            #rospy.Subscriber(topic["Topic_name"],self.dataClass[topic["data_class"]], callback= self.msg_class_forWrite[topic["msg_type"]]
+            #                 ,callback_args=(topic["Topic_name"],topic["collection"]),queue_size=topic["quene_size"])   
+      
             rospy.Subscriber(topic["Topic_name"],self.dataClass[topic["data_class"]], callback= self.msg_class_forWrite[topic["msg_type"]]
-                            ,callback_args=(topic["Topic_name"],topic["collection"]),queue_size=topic["quene_size"])   
+                 ,callback_args=(topic["Topic_name"],topic["collection"]),queue_size=topic["quene_size"])   
 
         rospy.loginfo("DataBase register Done! ")
         rospy.spin()
 
+
+    #################### Writer ######################
+    def write_std(self,msg,arguments): 
+        self.Database_handler[arguments[1]].insert_one({arguments[0]:msg.data})
+        rospy.loginfo(msg.data)
+        
+    def write_geometry(self,msg,arguments): 
+        msg = {
+            "timestamp":time.time(),
+            "x_velocity":msg.linear.x , "z_velocity":msg.angular.z 
+        }
+        self.Database_handler[arguments[1]].insert_one({arguments[0]})
+        rospy.loginfo(msg) 
+
+    def write_nextGaol(self,msg,arguments): 
+        msg ={
+            "timestamp": time.time(),
+            "vehicle":{"vehicle_id":msg.vehicle_id , "platform":msg.platform },
+            "uuid":msg.uuid ,
+            "attribute":msg.attr , 
+            "pose":{"x":msg.x , "y":msg.y, "rotation":msg.yaw },
+            "quaternion":[msg.x,msg.y,msg.z,msg.w],
+            "goal":msg.goal
+        }
+        self.Database_handler[arguments[1]].insert_one({arguments[0]})
 
 
 if __name__ == "__main__": 

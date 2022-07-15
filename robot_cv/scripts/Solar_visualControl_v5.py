@@ -95,7 +95,7 @@ def Uturn():
      # angle when call the Uturn funtion
     now_imu = imu_theta
     vel.linear.x = 0
-    vel.angular.z = flag * 0.12
+    vel.angular.z = flag * 0.15
     velPublisher.publish(vel)
     while True:
         print(imu_theta)
@@ -125,7 +125,7 @@ def Uturn():
     #----------------- step4. turn
     now_imu =imu_theta
     vel.linear.x = 0
-    vel.angular.z = flag * 0.12
+    vel.angular.z = flag * 0.15
     velPublisher.publish(vel)
     
     while True:

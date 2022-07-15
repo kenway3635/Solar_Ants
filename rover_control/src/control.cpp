@@ -107,8 +107,8 @@ float Check_minimum(float velocity)//check minimum of the input command
 {
    if (abs(velocity)<0.12)
             {
-                if (velocity<=0){velocity = -0.12;}
-                else if (velocity>0){velocity=0.12;}
+                if (velocity<=0){velocity = -0.2;}
+                else if (velocity>0){velocity=0.2;}
             }
   return velocity;
 }
@@ -212,8 +212,8 @@ while (ros::ok())
               }
             }
 
-            new_vel.linear.x = -0.5 * last_linear_vel;
-            new_vel.angular.z= -0.5 * last_angular_vel;
+            new_vel.linear.x = -1 * last_linear_vel;
+            new_vel.angular.z= -1 * last_angular_vel;
           }
         else
         {

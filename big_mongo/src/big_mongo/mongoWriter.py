@@ -39,3 +39,4 @@ class MongoWriter():
         }
         DatabaseHandle[arguments[1]].insert_one({arguments[0]})
         rospy.loginfo(msg) 
+
