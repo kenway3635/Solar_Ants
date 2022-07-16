@@ -19,7 +19,7 @@ def preProcessing(image,height,width) :
     #img = cv2.resize(image,(width,height))
     img = image
     #img_back = img[:,:int(margin*(1/3))]
-    img_back = img[:,:margin]
+    img_back = img[:,:2*margin]
     img_front = img[:,-margin:]
     #gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     #gray = cv2.GaussianBlur(gray,(5,5),0)
@@ -54,7 +54,7 @@ def area_detect(image,maxThresh=20000):
         cX = int(M["m10"]/(M["m00"]+0.001))
         cY = int(M["m01"]/(M["m00"]+0.001))
         area = max(area,cv2.contourArea(c))
-        print(area)
+    print(area)
     if area>=maxThresh:
         detectable = True
     return detectable
