@@ -1,6 +1,7 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 
+from cgi import test
 from pickletools import uint8
 import cv2
 import datetime
@@ -46,6 +47,18 @@ height = 360
 width=640
 margin = int(0.2*width)
 imuData =0
+enhance_factor = 1
+cv2.namedWindow("paraBar")
+
+
+def velocity_adjustment(value): 
+    global enhance_factor
+    enhance_factor = value * 0.01
+    print(f"enhance_factor is {enhance_factor}")
+    
+cv2.createTrackbar("velocity_factor","paraBar",0,300,velocity_adjustment)
+cv2.setTrackbar("veloctiy_factor","paraBar",100) 
+
 #-------------------------ROS image subscriber---------------#
 class ROS_image():
     def __init__(self):
@@ -95,7 +108,7 @@ def Uturn():
      # angle when call the Uturn funtion
     now_imu = imu_theta
     vel.linear.x = 0
-    vel.angular.z = flag * 0.15
+    vel.angular.z = flag * 0.15 *enhance_factor
     velPublisher.publish(vel)
     while True:
         print(imu_theta)
@@ -111,7 +124,7 @@ def Uturn():
     time.sleep(0.5)
      #------------------ step3. Slide
     now_imu = imu_y
-    vel.linear.x = 0.12
+    vel.linear.x = 0.12 *enhance_factor
     vel.angular.z = 0 
     velPublisher.publish(vel)
     while True:
@@ -125,7 +138,7 @@ def Uturn():
     #----------------- step4. turn
     now_imu =imu_theta
     vel.linear.x = 0
-    vel.angular.z = flag * 0.15
+    vel.angular.z = flag * 0.15 *enhance_factor
     velPublisher.publish(vel)
     
     while True:
@@ -152,7 +165,7 @@ def Move(State):
     flag = lambda Uturn_flag : 1 if Uturn_flag%2  == 0 else -1 
     flag =flag(Uturn_flag)
     if State[0] == 0 and State[1] == 0: #前後皆沒有偵測到物體-->直走
-        vel.linear.x = 0.3
+        vel.linear.x = 0.3 *enhance_factor
         vel.angular.z = 0 
         velPublisher.publish(vel)
         rospy.loginfo("Go forward")
@@ -169,7 +182,7 @@ def Move(State):
     elif State[0] ==0 and State[1] ==1: # 後方偵測到了
         if abs(State[2]) <= 5: # 當後方角度小於10度的時候可以繼續動
             
-            vel.linear.x =0.3
+            vel.linear.x =0.3*enhance_factor
             vel.angular.z = 0
             velPublisher.publish(vel)
         elif State[2] < -5:
