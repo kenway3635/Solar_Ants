@@ -157,15 +157,16 @@ int main(int argc, char **argv)
  		footprint_baselink.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_footprint", "base_link"));
 		*/
 
-		q.setRPY(0, 0, phi);
-		transform.setOrigin(tf::Vector3(x, y, 0.0));
-		transform.setRotation(q);
-		odom_footprint.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "odom", "base_link"));
+		// q.setRPY(0, 0, phi);
+		// transform.setOrigin(tf::Vector3(x, y, 0.0));
+		// transform.setRotation(q);
+		// odom_footprint.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "odom", "base_link"));
 
-		q.setRPY(0, 0, 0.0);
-		transform.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
+		q.setRPY(0, 0, 0);
+		transform.setOrigin(tf::Vector3(0.16, -0.10, 0.1));
 		transform.setRotation(q);
-		imu.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link","IMU_data"));
+		imu.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link","imu_link"));
+
 		ros::spinOnce();
 		loop_rate.sleep();
 	}

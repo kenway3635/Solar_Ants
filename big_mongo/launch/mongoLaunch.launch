@@ -1,0 +1,7 @@
+<launch>
+	
+    <node name="mongoRecord" pkg="big_mongo" type="mongoBug.py"
+    output = "screen"/> 
+    <rosparam file="$(find big_mongo)/config/Solar_config.yaml" command = "load" />
+    
+</launch>

@@ -1,0 +1,15 @@
+{
+    "DataBase": "ANEV_test" ,
+    "Collection_list": 
+    [
+        "test1","test2","test3"
+    ],
+    "ROS_TOPIC_list":
+    [
+    { "Topic_name":"test1" , "msg_type":"std","data_class": "String", "quene_size": 10 , "collection":"test3" },
+    { "Topic_name":"/Mode" , "msg_type":"std","data_class": "Int32", "quene_size": 10 , "collection":"test3" },
+    { "Topic_name":"/vl_load" ,"msg_type":"std","data_class": "Int32", "quene_size": 10 , "collection":"test3" },
+    { "Topic_name":"/cmd_vel" ,"msg_type":"geometry", "data_class": "Twist", "quene_size": 10 , "collection":"test2" }
+    ]
+
+}

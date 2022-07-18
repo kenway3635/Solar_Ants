@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>data_capture</name>
+  <name>end_2_end</name>
   <version>0.0.0</version>
-  <description>The data_capture package</description>
+  <description>The ml package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

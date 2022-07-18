@@ -4,7 +4,6 @@
 import cv2
 import sys
 import numpy as np
-import pandas as pd
 import sys
 import rospy
 from cv_bridge import CvBridge
@@ -25,25 +24,26 @@ def cv2_to_imgmsg(cv_image):
 
 cap = cv2.VideoCapture(3)
 # 設定影像的尺寸大小
-cap.set(cv2.CAP_PROP_FRAME_WIDTH,320)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT,180)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
 #fps
-#cap.set(cv2.CAP_PROP_FPS , 30)
+cap.set(cv2.CAP_PROP_FPS , 30)
 #set maxium buffer size
-#cap.set(cv2.CAP_PROP_BUFFERSIZE, 20)
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 20)
+#set image bit channels
 start_node()
 bridge = CvBridge()
 pub = rospy.Publisher('image', Image, queue_size=5)
 while (True):
   ret, frame = cap.read()
-  frame=cv2.resize(frame,(128,128))
+  #frame=cv2.resize(frame,(128,128))
   cv2.imshow('frame', frame)
   imgMsg = cv2_to_imgmsg(frame)
   pub.publish(imgMsg)
   # 若按下 q 鍵則離開迴圈
   if cv2.waitKey(1) & 0xFF == ord('q'):
+    cap.release()
+    cv2.destroyAllWindows()
     break
-  rospy.Rate(10).sleep()  # 10 Hz
-cap.release()
-cv2.destroyAllWindows()
-rospy.spin()
+  rospy.Rate(20).sleep()  # 10 Hz
+#rospy.spin()

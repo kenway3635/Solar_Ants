@@ -4,7 +4,7 @@
   </include>
 <include file="$(find imu_launch)/launch/imu_msg.launch" >
    </include>
-<node pkg="rover_control" type="rover_control" name="rover_control" output="screen"   >
+<node pkg="rover_control" type="rover_control" name="rover_control" output = "screen"  >
 <remap from = "/odom" to = "/odometry/filtered"/>
     </node>
 <node pkg="rover_control" type="motor_control" name="motor_control"   >

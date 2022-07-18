@@ -1,6 +1,7 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 
+from pickletools import uint8
 import cv2
 import datetime
 import rospy
@@ -10,6 +11,8 @@ from geometry_msgs.msg import Twist ,Pose2D
 from std_msgs.msg import String,Int64,Bool,Float32
 from robot_cv.SolarAnt_houph import area_detect,line_detect,preProcessing
 from robot_cv.coefficient import load_coefficients
+from cv_bridge import CvBridge
+from sensor_msgs.msg import Image
 
 # Control Flow : 
 """
@@ -43,7 +46,20 @@ height = 360
 width=640
 margin = int(0.2*width)
 imuData =0
+#-------------------------ROS image subscriber---------------#
+class ROS_image():
+    def __init__(self):
+        self.raw_image= np.zeros((180,320,3), dtype=np.uint32)
+        self.bridge=CvBridge()
 
+    def img_callback(self,data):
+        self.raw_image=self.bridge.imgmsg_to_cv2(data,desired_encoding='passthrough')
+        # cv2.imshow("Image window", raw_image)
+        # cv2.waitKey(0)
+
+    def listener(self):
+        rospy.Subscriber("image", Image, self.img_callback)
+#------------------------------------------------------------#
 # 用來啟動程序的callback
 def switch(msg):
     global visual_sw
@@ -63,7 +79,7 @@ def Uturn():
     rospy.loginfo("Uturn flag: %d" , Uturn_flag)
     flag = lambda Uturn_flag : 1 if Uturn_flag%2  == 0 else -1 
     flag =flag(Uturn_flag)
-    cap.release()
+    #cap.release()
     # -------------------step1. backward
     if not  "imu_x" in globals():
         rospy.loginfo("imu fail !")
@@ -79,141 +95,158 @@ def Uturn():
      # angle when call the Uturn funtion
     now_imu = imu_theta
     vel.linear.x = 0
-    vel.angular.z = flag * 0.2
+    vel.angular.z = flag * 0.15
     velPublisher.publish(vel)
     while True:
         print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
-        if angleDisplacement >= 85 and angleDisplacement <= 275:
+        if angleDisplacement >= 60 and angleDisplacement <= 300:
             break
         rospy.loginfo("first,angle_displacement: %2.1f",angleDisplacement)
         
         
-    vel.linear.x =0
-    vel.angular.z = 0 
-    velPublisher.publish(vel)
+    #vel.linear.x =0
+    #vel.angular.z = 0 
+    #velPublisher.publish(vel)
     time.sleep(0.5)
      #------------------ step3. Slide
     now_imu = imu_y
-    vel.linear.x = 0.07
+    vel.linear.x = 0.12
     vel.angular.z = 0 
     velPublisher.publish(vel)
     while True:
         print(imu_y)
-        if abs(now_imu - imu_y) >0.08:
+        if abs(now_imu - imu_y) >0.03:
             break
-    vel.linear.x =0
-    vel.angular.z = 0 
-    velPublisher.publish(vel)
+    #vel.linear.x =0
+    #vel.angular.z = 0 
+    #velPublisher.publish(vel)
     time.sleep(0.5)
     #----------------- step4. turn
     now_imu =imu_theta
     vel.linear.x = 0
-    vel.angular.z = flag * 0.2
+    vel.angular.z = flag * 0.15
     velPublisher.publish(vel)
     
     while True:
         print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
-        if angleDisplacement >= 85 and angleDisplacement <= 275:
+        if angleDisplacement >= 60 and angleDisplacement <= 300:
             break
         rospy.loginfo("second angle_displacement: %2.1f",angleDisplacement)
 
     rospy.loginfo("Uturn complete ! ,return to visual motion after 2 seconds")
-    vel.linear.x =0
-    vel.angular.z = 0 
-    velPublisher.publish(vel)
+    #vel.linear.x =0
+    #vel.angular.z = 0 
+    #velPublisher.publish(vel)
+    '''
     cap = cv2.VideoCapture(3)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
+    '''
     Uturn_flag +=1
-    assert cap.isOpened() , "camera open error"
+    #assert cap.isOpened() , "camera open error"
 
 def Move(State):
     global cap,Uturn_flag
     flag = lambda Uturn_flag : 1 if Uturn_flag%2  == 0 else -1 
     flag =flag(Uturn_flag)
     if State[0] == 0 and State[1] == 0: #前後皆沒有偵測到物體-->直走
-        vel.linear.x = 0.12
+        vel.linear.x = 0.3
         vel.angular.z = 0 
         velPublisher.publish(vel)
         rospy.loginfo("Go forward")
 
     elif State[0] ==1 : #前方偵測到了
-        vel.linear.x = 0
-        vel.angular.z =0 
+        #vel.linear.x = 0
+        #vel.angular.z =0 
         rospy.loginfo(" Stop !! ")
-        velPublisher.publish(vel)
+        #velPublisher.publish(vel)
         rospy.loginfo("Perform Uturn%2.1f",Uturn_flag)
-        time.sleep(1)
+        #time.sleep(1)
         Uturn()
         
     elif State[0] ==0 and State[1] ==1: # 後方偵測到了
         if abs(State[2]) <= 5: # 當後方角度小於10度的時候可以繼續動
             
-            vel.linear.x =0.1
+            vel.linear.x =0.3
             vel.angular.z = 0
             velPublisher.publish(vel)
-        elif State[2] < -6:
-            vel.linear.x =0.08
-            vel.angular.z = -flag*0.05
+        elif State[2] < -5:
+            vel.linear.x =0.1
+            #vel.angular.z = -flag*0.05
+            vel.angular.z = -0.06
             velPublisher.publish(vel)
             rospy.loginfo("detect angle diff , compensation: Right turn")
-        elif State[2] > 6:
-            vel.linear.x =0.08
-            vel.angular.z = flag*0.05
+        elif State[2] > 5:
+            vel.linear.x =0.1
+            #vel.angular.z = flag*0.05
+            vel.angular.z = 0.06
             velPublisher.publish(vel)
             rospy.loginfo("detect angle diff , compensation: Left turn")
 
 # 檢查相機啟動
+'''
 cap = cv2.VideoCapture(3)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
 if not cap.isOpened(): 
     rospy.loginfo("camera error")
     raise BaseException("camera error")
+'''
 # 初始化ros node
 rospy.init_node("visualControl",anonymous=True)
+rosimage=ROS_image()
+rosimage.listener()
+
 velPublisher = rospy.Publisher("visual_cmd_vel",Twist,queue_size=1)
 switchSubscribe = rospy.Subscriber("/visualSW",Bool,switch)
 angleSubscribe =rospy.Subscriber("/pose2d",Pose2D,angleRecoder,queue_size=1)
 #影像儲存: 
+'''
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 name=str(datetime.datetime.now())
-
+'''
 #output_img = cv2.VideoWriter("ww.avi",fourcc,15.0,(width,height))
 #output_img = cv2.VideoWriter("aaa.avi",fourcc,15.0,(width,height))
 #try:
 rospy.loginfo("start")
-rospy.loginfo(cap.isOpened())
-while cap.isOpened(): 
-    # Control flow start
-    # rospy.loginfo("start2")
-    ret,frame = cap.read()
-    State = "visual function off "
-    #print(mtx)
-    #frame = cv2.undistort(frame, mtx, dist, None, None)
-    IMG = cv2.resize(frame,(width,height))
-    #print(visual_sw)
-    if visual_sw:
-    #if 1 :
-        image_back , image_front = preProcessing(IMG,height,width)
-        detect_front=area_detect(image_front)
-        detect_back,back_angle = line_detect(image_back)
-        State = [detect_front,detect_back,back_angle]
-        #print(State)
-        Move(State)
-    else:
-        rospy.loginfo(State)
-    #output_img.write(IMG)
-    cv2.imshow("frame",IMG)
-    
-    if cv2.waitKey(100) &0xFF == ord("q"):
-        break
+#rospy.loginfo(cap.isOpened())
+#while cap.isOpened(): 
+while not rospy.is_shutdown():
+    #print("raw image =",rosimage.raw_image)
+    if rosimage.raw_image.any() != 0:
+        #cv2.imshow("raw_image",rosimage.raw_image)
+        #print('rosimage=',rosimage.raw_image)
+        # Control flow start
+        # rospy.loginfo("start2")
+        #ret,frame = cap.read()
+        # State = "visual function off "
+        #print(mtx)
+        #frame = cv2.undistort(frame, mtx, dist, None, None)
+        frame=rosimage.raw_image
+        IMG = cv2.resize(frame,(width,height))
+        
+        #print(visual_sw)
+        if visual_sw:
+        #if 1 :
+            image_back , image_front = preProcessing(IMG,height,width)
+            detect_front=area_detect(image_front)
+            detect_back,back_angle = line_detect(image_back)
+            State = [detect_front,detect_back,back_angle]
+            #print(State)
+            Move(State)
+        else:
+            rospy.loginfo(State)
+        #output_img.write(IMG)
+        cv2.imshow("frame",IMG)
+        
+        if cv2.waitKey(100) &0xFF == ord("q"):
+            break
 print("end")
 #except:
 #   rospy.loginfo("visual function error")
     
-cap.release()
+#cap.release()
 #output_img.release()
 cv2.destroyAllWindows()
