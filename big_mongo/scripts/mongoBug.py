@@ -5,6 +5,8 @@ from std_msgs.msg import String,Int64 ,Int16 , Int32, Bool , Float32MultiArray
 from geometry_msgs.msg import Twist
 from big_mongo.mongoWriter import MongoWriter 
 from pathlib import Path
+
+
 class MongoBug() : 
     
     def __init__(self,setting_file_path="Solar_setting.json") : 
@@ -15,7 +17,8 @@ class MongoBug() :
         self.ROS_topic = None
         self.setting() 
         self.dataClass = {
-            "String":String , "Int64":Int64 , "Int16":Int16 , "Int32":Int32 , "Twist":Twist,"Bool":Bool ,"Float32MultiArray":Float32MultiArray
+            "String":String , "Int64":Int64 , "Int16":Int16 , "Int32":Int32 , "Twist":Twist,"Bool":Bool ,
+            "Float32MultiArray":Float32MultiArray
         }
         self.msg_class_forWrite = {
             "std":MongoWriter.write_std  , "geometry":MongoWriter.write_geometry , 
@@ -54,33 +57,6 @@ class MongoBug() :
 
         rospy.loginfo("DataBase register Done! ")
         rospy.spin()
-
-
-    #################### Writer ######################
-    def write_std(self,msg,arguments): 
-        self.Database_handler[arguments[1]].insert_one({arguments[0]:msg.data})
-        rospy.loginfo(msg.data)
-        
-    def write_geometry(self,msg,arguments): 
-        msg = {
-            "timestamp":time.time(),
-            "x_velocity":msg.linear.x , "z_velocity":msg.angular.z 
-        }
-        self.Database_handler[arguments[1]].insert_one({arguments[0]})
-        rospy.loginfo(msg) 
-
-    def write_nextGaol(self,msg,arguments): 
-        msg ={
-            "timestamp": time.time(),
-            "vehicle":{"vehicle_id":msg.vehicle_id , "platform":msg.platform },
-            "uuid":msg.uuid ,
-            "attribute":msg.attr , 
-            "pose":{"x":msg.x , "y":msg.y, "rotation":msg.yaw },
-            "quaternion":[msg.x,msg.y,msg.z,msg.w],
-            "goal":msg.goal
-        }
-        self.Database_handler[arguments[1]].insert_one({arguments[0]})
-
 
 #if __name__ == "__main__": 
 

@@ -27,7 +27,8 @@ class MongoWriter():
     @staticmethod 
     def write_Float32MultiArray(msg,arguments): 
         msg = { 
-            "Brush":msg.data[0] , "Battery":msg.data[1] , "electrcity_box":msg.datap[2]
+            #"Brush":msg.data[0] ,
+            "Battery":msg.data[0] , "electrcity_box":msg.datap[1]
         }
         arguments[0].insert_one({arguments[1]:msg.data, "date":MongoWriter.genTime()})
         rospy.loginfo(msg)

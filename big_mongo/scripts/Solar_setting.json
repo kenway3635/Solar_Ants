@@ -2,17 +2,13 @@
     "DataBase": "Solar_test" ,
     "Collection_list": 
     [
-        "status_info","velocity_cmd" 
+        "status_info"
     ],
     "ROS_TOPIC_list":
     [
-    { "Topic_name":"/back_right_ir" , "msg_type":"std","data_class": "Bool", "quene_size": 5 , "collection":"status_info" },
-    { "Topic_name":"/front_right_ir" , "msg_type":"std","data_class": "Bool", "quene_size": 5 , "collection":"status_info"  },
-    { "Topic_name":"/back_left_ir" , "msg_type":"std","data_class": "Bool", "quene_size": 5 , "collection":"status_info"  },
-    { "Topic_name":"/front_left_ir" , "msg_type":"std","data_class": "Bool", "quene_size": 5 , "collection":"status_info"  },
+
     { "Topic_name":"/power" , "msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"status_info"  }, 
     { "Topic_name":"/voltage" , "msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"status_info"  }, 
-    { "Topic_name":"/current" , "msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"status_info"  }, 
     { "Topic_name":"/tempeature" , "msg_type":"stdFloat32MultiArray","data_class": "Float32MultiArray", "quene_size": 5 , "collection":"status_info"  }
 
     ]
