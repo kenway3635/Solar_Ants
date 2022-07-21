@@ -128,7 +128,7 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
     
     return detectable , angle
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(3)
 assert cap.isOpened() ,"cap error"
 
 while cap.isOpened() :
@@ -142,7 +142,7 @@ while cap.isOpened() :
     State = [detect_front,detect_back,back_angle]
     print(State)
     cv2.imshow("frame",IMG)
-    if cv2.waitKey(1) &0xFF == ord("q"):
+    if cv2.waitKey(200) &0xFF == ord("q"):
         print("end")
         break
 

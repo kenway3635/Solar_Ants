@@ -57,7 +57,7 @@ def velocity_adjustment(value):
     print(f"enhance_factor is {enhance_factor}")
     
 cv2.createTrackbar("velocity_factor","paraBar",0,300,velocity_adjustment)
-cv2.setTrackbar("veloctiy_factor","paraBar",100) 
+cv2.setTrackbarPos("velocity_factor","paraBar",100) 
 
 #-------------------------ROS image subscriber---------------#
 class ROS_image():

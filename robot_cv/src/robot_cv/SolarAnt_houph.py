@@ -53,12 +53,8 @@ def area_detect(image,maxThresh=12000):
         M = cv2.moments(c)
         cX = int(M["m10"]/(M["m00"]+0.001))
         cY = int(M["m01"]/(M["m00"]+0.001))
-<<<<<<< HEAD
-        area = max(area,cv2.contourArea(c))
-=======
         area += cv2.contourArea(c) if cv2.contourArea(c) >500 else 0
         #area = max(area,cv2.contourArea(c))
->>>>>>> d6b70edb2fac14decdc2911aa57d9f1f632970aa
     print(area)
     if area>=maxThresh:
         detectable = True

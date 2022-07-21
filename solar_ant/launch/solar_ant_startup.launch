@@ -51,10 +51,15 @@
 
 
         <node name="cap_node" pkg="end_2_end" type="image_pub.py" output="screen"/> 
+        <node name="Solar_visualControl_v5" pkg="robot_cv" type="Solar_visualControl_v5.py" output="screen"/> 
 
 	<node pkg="rosserial_python" type="serial_node.py" name="serial_node">
                 <param name="baud" value="57600" />
                 <param name="port" value="/dev/ttyACM0" />
 	</node>
+
+           <node name="mongoRecord" pkg="big_mongo" type="mongoBug.py"/> 
+        <rosparam file="$(find big_mongo)/config/Solar_config.yaml" command = "load" />
+    
         
 </launch>

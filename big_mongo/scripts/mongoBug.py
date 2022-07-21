@@ -1,7 +1,7 @@
 #-*- coding:UTF-8 -*- 
 import rospy ,os ,time ,json,sys
 from pymongo import MongoClient 
-from std_msgs.msg import String,Int64 ,Int16 , Int32, Bool , Float32MultiArray
+from std_msgs.msg import String,Int64 ,Int16 , Int32, Bool,Float32 , Float32MultiArray
 from geometry_msgs.msg import Twist
 from big_mongo.mongoWriter import MongoWriter 
 from pathlib import Path
@@ -11,14 +11,14 @@ class MongoBug() :
     
     def __init__(self,setting_file_path="Solar_setting.json") : 
 
-        self.DataBase = MongoClient("192.168.0.82",27017,username="root",password="kangli0306")
+        self.DataBase = MongoClient("140.112.95.230",27017,username="root",password="kangli0306")
         self.setting_file= setting_file_path 
         self.Database_handler = {}
         self.ROS_topic = None
         self.setting() 
         self.dataClass = {
             "String":String , "Int64":Int64 , "Int16":Int16 , "Int32":Int32 , "Twist":Twist,"Bool":Bool ,
-            "Float32MultiArray":Float32MultiArray
+            "Float32MultiArray":Float32MultiArray , "Float32":Float32
         }
         self.msg_class_forWrite = {
             "std":MongoWriter.write_std  , "geometry":MongoWriter.write_geometry , 
