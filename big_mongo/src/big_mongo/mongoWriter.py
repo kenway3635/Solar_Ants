@@ -24,15 +24,7 @@ class MongoWriter():
         arguments[0].insert_one({arguments[1]:msg.data, "date":MongoWriter.genTime()})
         rospy.loginfo(msg) 
         
-    @staticmethod 
-    def write_Float32MultiArray(msg,arguments): 
-        sg = { 
-            #"Brush":msg.data[0] ,
-            "Battery":msg.data[0] , "electrcity_box":msg.data[1]
-        }
-        arguments[0].insert_one({arguments[1]:msg.data, "date":MongoWriter.genTime()})
-        rospy.loginfo(sg)
-        rospy.loginfo(msg)
+
         
     @staticmethod
     def write_nextGoal(DatabaseHandle,msg,arguments):
@@ -58,3 +50,11 @@ class MongoWriter():
         arguments[0].insert_one({arguments[1]:msg.data, "date":MongoWriter.genTime()})
         rospy.loginfo(msg) 
 
+
+    @staticmethod 
+    def layer_info(msg,arguments): 
+        msg = {
+            "layer1":msg.layers[0] , "layer2":msg.layers[1] , "layer3":msg.layers[2]
+        }
+        arguments[0].insert_one({arguments[1]:msg.data, "date":MongoWriter.genTime()})
+        rospy.loginfo(msg) 

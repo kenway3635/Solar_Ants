@@ -1,7 +1,8 @@
 #-*- coding:UTF-8 -*- 
 import rospy ,os ,time ,json,sys
 from pymongo import MongoClient 
-from std_msgs.msg import String,Int64 ,Int16 , Int32, Bool,Float32 , Float32MultiArray
+from std_msgs.msg import String,Int64 ,Int16 , Int32, Bool , Float32MultiArray
+from big_mongo.msg import layer_msg , next_goal ,order_info
 from geometry_msgs.msg import Twist
 from big_mongo.mongoWriter import MongoWriter 
 from pathlib import Path
@@ -11,21 +12,21 @@ class MongoBug() :
     
     def __init__(self,setting_file_path="Solar_setting.json") : 
 
-        self.DataBase = MongoClient("140.112.95.230",27017,username="root",password="kangli0306")
-        #self.DataBase = MongoClient("localhost",27017)
+        self.DataBase = MongoClient("192.168.0.82",27017,username="root",password="kangli0306")
         self.setting_file= setting_file_path 
         self.Database_handler = {}
         self.ROS_topic = None
         self.setting() 
         self.dataClass = {
             "String":String , "Int64":Int64 , "Int16":Int16 , "Int32":Int32 , "Twist":Twist,"Bool":Bool ,
-            "Float32MultiArray":Float32MultiArray , "Float32":Float32
+            "Float32MultiArray":Float32MultiArray,
+            "next_goal":next_goal , "order_info":order_info , "layer_msg":layer_msg
+            
         }
         self.msg_class_forWrite = {
-            "std":MongoWriter.write_std  , "geometry":MongoWriter.write_geometry , 
+            "std":MongoWriter.write_std  , "twist":MongoWriter.write_geometry , 
             "stdFloat32MultiArray":MongoWriter.write_Float32MultiArray 
-            #"std":self.write_std,
-            #"geometry":self.write_geometry
+   
         }
         
     # 打開設定,讀取setting file內的資料庫名稱, 使用的資料庫collection names,以及要紀錄的rostopic name

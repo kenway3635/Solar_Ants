@@ -172,7 +172,7 @@ include_directories(
 # )
 
 catkin_install_python(PROGRAMS
-    scripts/mongoBug.py
+    scripts/mongoBug.py scripts/mongoBug_MQTT.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 ## Mark executables for installation

@@ -1,5 +1,9 @@
 {
-    "DataBase": "Solar_test" ,
+    "Server":"192.168.0.82", 
+    "username":"root",
+    "pwd":"kangli0306",
+    "DataBase": "SolarAnt_Data" ,
+    "MQTTport":1883,
     "Collection_list": 
     [
         "temperature","power","voltage"
@@ -9,7 +13,7 @@
 
     { "Topic_name":"/power" , "msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"power"  }, 
     { "Topic_name":"/voltage" , "msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"voltage"  }, 
-    { "Topic_name":"/temperature" , "msg_type":"std","data_class": "Float32MultiArray", "quene_size": 5 , "collection":"temperature"  }
+    { "Topic_name":"/tempeature" , "msg_type":"std","data_class": "Float32MultiArray", "quene_size": 5 , "collection":"temperature"  }
 
     ]
 

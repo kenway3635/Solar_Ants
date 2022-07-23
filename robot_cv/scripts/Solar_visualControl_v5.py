@@ -85,6 +85,14 @@ def angleRecoder(msg):
     imu_y = msg.y
     imu_theta = msg.theta
 
+def IR_left(msg): 
+    global IR_l 
+    IR_l  = msg.data 
+def IR_right(msg): 
+    global IR_r 
+    IR_r = msg.data 
+    
+
 def Uturn():
     global cap,Uturn_flag,visual_sw
     # preWork for freeze camera
@@ -218,6 +226,9 @@ rosimage.listener()
 velPublisher = rospy.Publisher("visual_cmd_vel",Twist,queue_size=1)
 switchSubscribe = rospy.Subscriber("/visualSW",Bool,switch)
 angleSubscribe =rospy.Subscriber("/pose2d",Pose2D,angleRecoder,queue_size=1)
+
+FL_IR_Subscribe = rospy.Subscriber("/front_left_ir",Bool,IR_left,queue_size=1)
+FR_IR_Subscribe = rospy.Subscriber("/front_right_ir",Bool,IR_right,queue_size=1)
 #影像儲存: 
 '''
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -254,6 +265,7 @@ while not rospy.is_shutdown():
             detect_front=area_detect(image_front)
             detect_back,back_angle = line_detect(image_back)
             State = [detect_front,detect_back,back_angle]
+            State[0] = 1 if IR_l and IR_r else State[0]
             #print(State)
             Move(State)
         else:
