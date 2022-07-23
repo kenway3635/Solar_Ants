@@ -1,4 +1,4 @@
-
+#! /user/bin/python3
 from pymongo import MongoClient
 import paho.mqtt.client as mqtt 
 import json 
