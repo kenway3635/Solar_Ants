@@ -109,8 +109,9 @@ def Uturn():
     now_imu = imu_theta
     vel.linear.x = 0
     vel.angular.z = flag * 0.15 *enhance_factor
-    velPublisher.publish(vel)
+    
     while True:
+        velPublisher.publish(vel)
         print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
         if angleDisplacement >= 60 and angleDisplacement <= 300:
@@ -126,8 +127,9 @@ def Uturn():
     now_imu = imu_y
     vel.linear.x = 0.12 *enhance_factor
     vel.angular.z = 0 
-    velPublisher.publish(vel)
+    
     while True:
+        velPublisher.publish(vel)
         print(imu_y)
         if abs(now_imu - imu_y) >0.03:
             break
@@ -139,9 +141,10 @@ def Uturn():
     now_imu =imu_theta
     vel.linear.x = 0
     vel.angular.z = flag * 0.15 *enhance_factor
-    velPublisher.publish(vel)
+    
     
     while True:
+        velPublisher.publish(vel)
         print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
         if angleDisplacement >= 60 and angleDisplacement <= 300:
@@ -227,7 +230,11 @@ rospy.loginfo("start")
 #rospy.loginfo(cap.isOpened())
 #while cap.isOpened(): 
 while not rospy.is_shutdown():
-    #print("raw image =",rosimage.raw_image)
+    #print("raw image =",rosimage.raw_image.shape)
+    #print(type(rosimage.raw_image),bool(rosimage.raw_image.any()))
+    
+    
+    IMG = np.ones((360,640),dtype=np.uint8)
     if rosimage.raw_image.any() != 0:
         #cv2.imshow("raw_image",rosimage.raw_image)
         #print('rosimage=',rosimage.raw_image)
@@ -238,8 +245,8 @@ while not rospy.is_shutdown():
         #print(mtx)
         #frame = cv2.undistort(frame, mtx, dist, None, None)
         frame=rosimage.raw_image
+    
         IMG = cv2.resize(frame,(width,height))
-        
         #print(visual_sw)
         if visual_sw:
         #if 1 :
@@ -252,10 +259,10 @@ while not rospy.is_shutdown():
         else:
             rospy.loginfo(State)
         #output_img.write(IMG)
-        cv2.imshow("frame",IMG)
+    cv2.imshow("frame",IMG)
         
-        if cv2.waitKey(100) &0xFF == ord("q"):
-            break
+    if cv2.waitKey(100) &0xFF == ord("q"):
+        break
 print("end")
 #except:
 #   rospy.loginfo("visual function error")

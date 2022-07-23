@@ -12,6 +12,7 @@ class MongoBug() :
     def __init__(self,setting_file_path="Solar_setting.json") : 
 
         self.DataBase = MongoClient("140.112.95.230",27017,username="root",password="kangli0306")
+        #self.DataBase = MongoClient("localhost",27017)
         self.setting_file= setting_file_path 
         self.Database_handler = {}
         self.ROS_topic = None

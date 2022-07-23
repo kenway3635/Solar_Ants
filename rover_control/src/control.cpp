@@ -145,6 +145,7 @@ ros::Time::init();
 ros::Rate r(10);
 float last_linear_vel=0;//save last velocity value for recovery
 float last_angular_vel=0;
+bool stamp= false;
 
 while (ros::ok())
   {
@@ -171,11 +172,12 @@ while (ros::ok())
             last_angular_vel=cam_ang_z;
             }
         }
-        //ROS_INFO("velocity is %f,  %f",last_linear_vel,last_angular_vel);
+        //ROS_INFO("last velocity is %f,  %f",last_linear_vel,last_angular_vel);
 
         if ((FL==true)||(FR==true)||(BL==true)||(BR==true))//cliff detected
           {
             ROS_INFO("cliff  detected!!, doing self recovery");
+            stamp = true;
             //stop.data=true;
             last_linear_vel = Check_minimum(last_linear_vel);
             last_angular_vel = Check_minimum(last_angular_vel);
@@ -217,10 +219,16 @@ while (ros::ok())
           }
         else
         {
-          if(mode == 1)//manual control AMR
+          if (stamp == true)
+          {
+            new_vel.linear.x = 0;
+            new_vel.angular.z= 0;
+            stamp = false;
+          }
+          else if(mode == 1)//manual control AMR
           {
             stop.data=false;
-            ROS_INFO("Manual");
+            //ROS_INFO("Manual");
             new_vel.linear.x = Vel_x;
             new_vel.angular.z= Ang_z;
             state=1;
@@ -388,7 +396,8 @@ while (ros::ok())
           }
         }
     }
-    
+  //ROS_INFO("new velocity is %f,  %f",new_vel.linear.x,new_vel.angular.z);
+ 
   vel_pub.publish(new_vel);
   cmd_stop.publish(stop);
   ros::spinOnce();
