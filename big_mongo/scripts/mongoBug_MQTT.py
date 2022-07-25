@@ -3,9 +3,13 @@ import rospy , json
 import  paho.mqtt.client as mqtt
 from std_msgs.msg  import String,Int64 ,Int16 , Int32, Bool , Float32MultiArray,Float32 
 from geometry_msgs.msg import Twist
-from ROS_msgParser import * 
+#from ROS_msgParser import * 
 from collections import namedtuple 
+def std_Parser(msg): 
+    return  {"data":msg.data} 
 
+def twist_Parser(msg): 
+    return {"x":msg.linear.x,"z":msg.angular.z} 
 
 class MongoBug_MQTT(mqtt.Client): 
     
@@ -68,7 +72,7 @@ class MongoBug_MQTT(mqtt.Client):
 
 if __name__ == "__main__": 
     
-    #setting_file = rospy.get_param("/json_file",None)
-    setting_file =None
+    setting_file = rospy.get_param("/json_file",None)
+    #setting_file =None
     DataBaseClient = MongoBug_MQTT(setting_file_path=setting_file) if setting_file else MongoBug_MQTT() 
     DataBaseClient._reigister() 

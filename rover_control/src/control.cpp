@@ -105,7 +105,7 @@ float PID(float err,float Last_err,float kp,float ki,float kd,float upper_lim,fl
 
 float Check_minimum(float velocity)//check minimum of the input command
 {
-   if (abs(velocity)<0.12)
+   if (abs(velocity)<0.2)
             {
                 if (velocity<=0){velocity = -0.2;}
                 else if (velocity>0){velocity=0.2;}

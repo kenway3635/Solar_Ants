@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 import rospy , json
 
 from std_msgs.msg  import String,Int64 ,Int16 , Int32, Bool , Float32MultiArray,Float32 
