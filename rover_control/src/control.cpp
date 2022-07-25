@@ -156,66 +156,34 @@ while (ros::ok())
       }
       else
       {
-        if (mode ==1)
-        {
-          if ((Vel_x != 0) || (Ang_z != 0))
-          {
-          last_linear_vel = Vel_x;
-          last_angular_vel = Ang_z;
-          }
-        }
-        else if (mode ==0)
-        {
-          if ((cam_vel_x != 0) || (cam_ang_z != 0))
-            {
-            last_linear_vel=cam_vel_x;
-            last_angular_vel=cam_ang_z;
-            }
-        }
-        //ROS_INFO("last velocity is %f,  %f",last_linear_vel,last_angular_vel);
+ 
 
         if ((FL==true)||(FR==true)||(BL==true)||(BR==true))//cliff detected
           {
             ROS_INFO("cliff  detected!!, doing self recovery");
             stamp = true;
-            //stop.data=true;
             last_linear_vel = Check_minimum(last_linear_vel);
             last_angular_vel = Check_minimum(last_angular_vel);
             if((FL==true)&&(BL==true))
             {
-              last_linear_vel=0;
-              if(last_angular_vel<0)
-              {
-                last_angular_vel=last_angular_vel*-1;
-              }
+              new_vel.linear.x =0;
+              new_vel.angular.z=-0.2;
             }
             else if((FR==true)&&(BR==true))
             {
-              last_linear_vel=0;
-              if(last_angular_vel>0)
-              {
-                last_angular_vel=last_angular_vel*-1;
-              }
+              new_vel.linear.x =0;
+              new_vel.angular.z=0.2;
             }
             else if ((FL==true)||(FR==true))
             {
-              last_angular_vel =0;
-              if (last_linear_vel<0)
-              {
-                last_linear_vel=last_linear_vel*-1;
-              }
+              new_vel.linear.x =-0.2;
+              new_vel.angular.z=0;
             }
             else if((BL==true)||(BR==true))
             { 
-              last_angular_vel=0;
-              if(last_linear_vel>0)
-              {
-                last_linear_vel=last_linear_vel*-1;
-              }
+              new_vel.linear.x =0.2;
+              new_vel.angular.z=0;
             }
-
-            new_vel.linear.x = -1 * last_linear_vel;
-            new_vel.angular.z= -1 * last_angular_vel;
           }
         else
         {
@@ -228,7 +196,7 @@ while (ros::ok())
           else if(mode == 1)//manual control AMR
           {
             stop.data=false;
-            //ROS_INFO("Manual");
+            ROS_INFO("Manual");
             new_vel.linear.x = Vel_x;
             new_vel.angular.z= Ang_z;
             state=1;
@@ -382,7 +350,7 @@ while (ros::ok())
           else if(mode == 0)//camera control
           {
             stop.data=false;
-            //ROS_INFO("camera mode !");
+            ROS_INFO("camera mode !");
             new_vel.linear.x=cam_vel_x;
             new_vel.angular.z=cam_ang_z;
           }

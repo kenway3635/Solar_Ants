@@ -30,6 +30,8 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
 cap.set(cv2.CAP_PROP_FPS , 30)
 #set maxium buffer size
 cap.set(cv2.CAP_PROP_BUFFERSIZE, 20)
+#disable auto focus
+cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
 #set image bit channels
 start_node()
 bridge = CvBridge()
