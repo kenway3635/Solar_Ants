@@ -50,6 +50,13 @@ class MongoBug_MQTT(mqtt.Client):
         #self.connect("localhost",1883,60)
         rospy.loginfo("mqtt connection success")
         
+        #for testing 
+        rospy.Subscriber("/front_left_ir",Bool,self.simplePublish,callback_args="/front_left_ir")
+        rospy.Subscriber("/back_left_ir",Bool,self.simplePublish,callback_args="/back_left_ir")
+        rospy.Subscriber("/front_right_ir",Bool,self.simplePublish,callback_args="/front_right_ir")
+        rospy.Subscriber("/back_right_ir",Bool,self.simplePublish,callback_args="/back_right_ir")
+        
+        
         for topic in self.ROSTOPIC : 
             rospy.loginfo(f"Subscribe ROS topic : {topic}")
             
@@ -68,18 +75,20 @@ class MongoBug_MQTT(mqtt.Client):
         
         rospy.spin()
 
-
-    # old version
-    def _mqttPublish(self,msg,arg): 
+    def simplePublish(self,msg,arg): 
+        self.publish(arg,json.dumps(msg),qos=0)
         
-        msg = self.msg_type_parser[arg.msgType](msg)
-        self.publish(arg.topic,json.dumps(msg),qos=0) 
+    # old version
+    # def _mqttPublish(self,msg,arg): 
+        
+    #     msg = self.msg_type_parser[arg.msgType](msg)
+    #     self.publish(arg.topic,json.dumps(msg),qos=0) 
     
     def _updateLatch(self,msg,arg):
         self.latch[arg.topic] = self.msg_type_parser[arg.msgType](msg)
         
     def mqttPublish(self,*args): 
-       
+        
         for key,item in self.latch.items(): 
             self.publish(key,json.dumps(item),qos=0)
 

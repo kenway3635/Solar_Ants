@@ -6,7 +6,7 @@
     "MQTTport":1883,
     "Collection_list": 
     [
-        "temperature","power","voltage"
+        "temperature","power","voltage","Error"
     ],
     "ROS_TOPIC_list":
     [

@@ -50,14 +50,19 @@ class MongoServer(mqtt.Client):
             
         print(f"connect to {self.IP}")
         self.connect(self.IP,self.MQTTport,60)
-
+   
     def writeDatabase(self,userdata,msg): 
-        print("do")
-        topic , msg = MongoServer.JsonDecode(msg) 
-        msg.update({"date":datetime.now().isoformat()})
-        print(f"Write a message into {topic}, {msg}")
+        try : 
+            topic , msg = MongoServer.JsonDecode(msg) 
+            msg.update({"date":datetime.now().isoformat()})
+            print(f"Write a message into {topic}, {msg}")
         # write into database 
-        self.Database_handler[self.collection_reference[topic]].insert_one(msg)
+            self.Database_handler[self.collection_reference[topic]].insert_one(msg)
+        except: 
+            
+            msg = {"data":"msgTypeError" , "date":datetime.now().isoformat()}
+            self.Database_handler["Error"].insert_one(msg)
+            
         
               
     def _mqtt_Onconnect(self,userdata,flags,rc): 
