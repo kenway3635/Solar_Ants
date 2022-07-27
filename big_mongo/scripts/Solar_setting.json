@@ -1,9 +1,9 @@
 {
-    "Server":"140.112.95.230", 
+    "Server":"192.168.0.82", 
     "username":"root",
     "pwd":"kangli0306",
     "DataBase": "SolarAnt_Data" ,
-    "MQTTport":1885,
+    "MQTTport":1883,
     "Collection_list": 
     [
         "temperature","power","voltage","Error"
