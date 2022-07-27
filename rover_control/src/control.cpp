@@ -1,4 +1,5 @@
 #include <rover.h>
+#include "time.h"
 
 
 double rad2deg(double radians)
@@ -103,13 +104,11 @@ float PID(float err,float Last_err,float kp,float ki,float kd,float upper_lim,fl
   return u;
 }
 
-float Check_minimum(float velocity)//check minimum of the input command
+float go_minimum(float velocity)//check minimum of the input command
 {
-   if (abs(velocity)<0.2)
-            {
-                if (velocity<=0){velocity = -0.2;}
-                else if (velocity>0){velocity=0.2;}
-            }
+
+  if (velocity<0){velocity = -0.06;}
+  else if (velocity>0){velocity=0.06;}
   return velocity;
 }
 
@@ -147,6 +146,9 @@ float last_linear_vel=0;//save last velocity value for recovery
 float last_angular_vel=0;
 bool stamp= false;
 
+clock_t not_trigger,IR_trigger;
+double duration;
+
 while (ros::ok())
   {
       if(mode == 99)//emergency stop AMR
@@ -156,37 +158,62 @@ while (ros::ok())
       }
       else
       {
- 
+         if (mode ==1)
+        {
+          if ((Vel_x != 0) || (Ang_z != 0))
+          {
+          last_linear_vel = Vel_x;
+          last_angular_vel = Ang_z;
+          }
+        }
+        else if (mode ==0)
+        {
+          if ((cam_vel_x != 0) || (cam_ang_z != 0))
+            {
+            last_linear_vel=cam_vel_x;
+            last_angular_vel=cam_ang_z;
+            }
+        }
+
 
         if ((FL==true)||(FR==true)||(BL==true)||(BR==true))//cliff detected
           {
-            ROS_INFO("cliff  detected!!, doing self recovery");
+            IR_trigger = clock();
+            duration = (double)(IR_trigger-not_trigger)/10000;
+            ROS_INFO("trigger duration time = %f",duration);
+            //ROS_INFO("cliff  detected!!, doing self recovery");
+            stop.data=false;
             stamp = true;
-            last_linear_vel = Check_minimum(last_linear_vel);
-            last_angular_vel = Check_minimum(last_angular_vel);
-            if((FL==true)&&(BL==true))
+            new_vel.linear.x = go_minimum(last_linear_vel);
+            new_vel.angular.z = go_minimum(last_angular_vel);
+
+            if (duration > 3)
             {
-              new_vel.linear.x =0;
-              new_vel.angular.z=-0.2;
-            }
-            else if((FR==true)&&(BR==true))
-            {
-              new_vel.linear.x =0;
-              new_vel.angular.z=0.2;
-            }
-            else if ((FL==true)||(FR==true))
-            {
-              new_vel.linear.x =-0.2;
-              new_vel.angular.z=0;
-            }
-            else if((BL==true)||(BR==true))
-            { 
-              new_vel.linear.x =0.2;
-              new_vel.angular.z=0;
+              if((FL==true)&&(BL==true))
+              {
+                new_vel.linear.x =0;
+                new_vel.angular.z=-0.2;
+              }
+              else if((FR==true)&&(BR==true))
+              {
+                new_vel.linear.x =0;
+                new_vel.angular.z=0.2;
+              }
+              else if ((FL==true)||(FR==true))
+              {
+                new_vel.linear.x =-0.2;
+                new_vel.angular.z=0;
+              }
+              else if((BL==true)||(BR==true))
+              { 
+                new_vel.linear.x =0.2;
+                new_vel.angular.z=0;
+              }
             }
           }
         else
         {
+          not_trigger = clock();
           if (stamp == true)
           {
             new_vel.linear.x = 0;
@@ -207,7 +234,7 @@ while (ros::ok())
             float Last_err_x=error_x;
             float Last_err_y=error_y;
             float Last_err_theta=error_theta;
-            // error_x=length-abs(x-reg_x);
+            // edurationrror_x=length-abs(x-reg_x);
             // error_y=wide-abs(y-reg_y);
             // error_theta=90-abs(theta-reg_theta);
             float linear_kp,linear_ki,linear_kd,angular_kp,angular_ki,angular_kd,angle_upperlim,angle_lowerlim,linear_upperlim,linear_lowerlim;
