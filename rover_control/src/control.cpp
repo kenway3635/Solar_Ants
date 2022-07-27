@@ -104,13 +104,11 @@ float PID(float err,float Last_err,float kp,float ki,float kd,float upper_lim,fl
   return u;
 }
 
-float Check_minimum(float velocity)//check minimum of the input command
+float go_minimum(float velocity)//check minimum of the input command
 {
-   if (abs(velocity)<0.06)
-            {
-                if (velocity<0){velocity = -0.06;}
-                else if (velocity>0){velocity=0.06;}
-            }
+
+  if (velocity<0){velocity = -0.06;}
+  else if (velocity>0){velocity=0.06;}
   return velocity;
 }
 
@@ -186,10 +184,10 @@ while (ros::ok())
             //ROS_INFO("cliff  detected!!, doing self recovery");
             stop.data=false;
             stamp = true;
-            new_vel.linear.x = Check_minimum(0.5*last_linear_vel);
-            new_vel.angular.z = Check_minimum(0.5*last_angular_vel);
+            new_vel.linear.x = go_minimum(last_linear_vel);
+            new_vel.angular.z = go_minimum(last_angular_vel);
 
-            if (duration > 2)
+            if (duration > 3)
             {
               if((FL==true)&&(BL==true))
               {
