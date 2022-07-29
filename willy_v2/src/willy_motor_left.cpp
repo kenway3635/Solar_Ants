@@ -283,7 +283,7 @@ void willy_motor::run()
 		send_cmd(0x00, 0x138A, 0);
 		send_cmd(ID_1, 0x0384, 1);
 		send_cmd(0x00, 0x102A, 1);//Load holding function
-		send_cmd(0x00, 0x0294, 0);//Impact softening filter
+		send_cmd(0x00, 0x0294, 1);//Impact softening filter
 		send_cmd(0x00, 0x0E54, 3);//Decelaration mode selection
 
 		send_cmd(0x00 , 0x1030 , -1); // load holding torque limit
@@ -362,7 +362,14 @@ int willy_motor::calculate_cmd(int v)
 	int upper_lim=3000,lower_lim=80;
 	if (stop_l)//emergency stop
 	{
-		send_cmd_single(ID_1, 0x007D, 0b0000000000001010);
+		if (last_dir == 1)
+		{
+			send_cmd_single(ID_1, 0x007D, 0b0000000000101010);
+		}
+		else
+		{
+			send_cmd_single(ID_1, 0x007D, 0b0000000000001010);
+		}
 		vel_data=0;
 	}
 	else
