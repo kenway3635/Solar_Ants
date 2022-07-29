@@ -42,18 +42,25 @@ class MongoBug_MQTT(mqtt.Client):
         
         self.reconnect_delay_set(min_delay=1,max_delay=180) 
         
+    def irPub(self,msg,arg): 
+        #rospy.loginfo(arg)
+        self.publish(arg,json.dumps(msg.data),qos=0)
+    
+    def linePub(self,msg):
+        self.publish("/line",json.dumps(msg.data),qos=1)
         
+        pass 
     #main function for ros thread
     def _reigister(self): 
         rospy.init_node("Ros_mongo",anonymous=True)
         self.connect(self.IP,self.MQTTport,80)
         #self.connect("localhost",1883,60)
         rospy.loginfo("mqtt connection success")
-
-
-
-
-        
+        rospy.Subscriber("/front_left_ir",Bool,self.irPub,callback_args=("/front_left_ir"))
+        rospy.Subscriber("/back_right_ir",Bool,self.irPub,callback_args=("/back_right_ir"))
+        rospy.Subscriber("/back_left_ir",Bool,self.irPub,callback_args=("/back_left_ir"))
+        rospy.Subscriber("/front_right_ir",Bool,self.irPub,callback_args=("/front_right_ir"))
+        rospy.Subscriber("/line",Bool,self.linePub)
         for topic in self.ROSTOPIC : 
             rospy.loginfo(f"Subscribe ROS topic : {topic}")
             

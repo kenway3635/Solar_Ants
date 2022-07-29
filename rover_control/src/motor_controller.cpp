@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, "controller");
   ros::NodeHandle n;
-  motor_vel_pub =  n.advertise<std_msgs::Int32MultiArray>("cmd_motor", 10);
+  motor_vel_pub =  n.advertise<std_msgs::Int32MultiArray>("cmd_motor", 1);
   slip_pub =  n.advertise<std_msgs::Float64>("slip", 10);
   tilt_pub =  n.advertise<std_msgs::Float64>("tilt", 10);
 
@@ -65,8 +65,8 @@ ros::Rate r(20);
 while (ros::ok())
   {
     slip_ratio=abs(odom_omega-imu_omega);
-    VR = linear_vel*0.3 + angular_vel * Wheel_Base;
-    VL = linear_vel*0.3 - angular_vel  * Wheel_Base;
+    VR = linear_vel + angular_vel * Wheel_Base;
+    VL = linear_vel - angular_vel  * Wheel_Base;
     // if (slip_ratio>0.5)//single wheel mode
     // {
    //   if(VR*VL<0)

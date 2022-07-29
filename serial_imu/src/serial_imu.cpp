@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "serial_imu");
 	ros::NodeHandle n;
 
-	ros::Publisher IMU_pub = n.advertise<sensor_msgs::Imu>("/imu/data_raw", 20);
+	ros::Publisher IMU_pub = n.advertise<sensor_msgs::Imu>("/imu/data_raw", 10);
 	ros::Publisher Imu_0x91_pub = n.advertise<serial_imu::Imu_0x91_msg>("/imu_0x91_package", 10);
 	ros::Publisher Imu_0x62_pub = n.advertise<serial_imu::Imu_0x62_msg>("/imu_0x62_package", 10);
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
 	
 	alarm(1);
 	
-	ros::Rate loop_rate(400);
+	ros::Rate loop_rate(100);
 	sensor_msgs::Imu imu_data;
 	serial_imu::Imu_0x91_msg imu_0x91_msg;
 	serial_imu::Imu_0x62_msg imu_0x62_msg;
@@ -116,13 +116,13 @@ int main(int argc, char** argv)
 			if(num > 0)
 			{
 				imu_data.header.stamp = ros::Time::now();
-				imu_data.header.frame_id = "imu_link";
+				imu_data.header.frame_id = "base_link";
 
 				imu_0x91_msg.header.stamp = ros::Time::now(); 
-				imu_0x91_msg.header.frame_id = "imu_0x91_link";
+				imu_0x91_msg.header.frame_id = "base_0x91_link";
 
 				imu_0x62_msg.header.stamp = ros::Time::now();
-				imu_0x62_msg.header.frame_id = "imu_0x62_link";
+				imu_0x62_msg.header.frame_id = "base_0x62_link";
 
 				for (int i = 0; i < num; i++)
 				{

@@ -118,7 +118,8 @@ def Uturn():
     vel.linear.x = 0
     vel.angular.z = flag * 0.15 *enhance_factor
     
-    while True:
+    #while True  :
+    while visual_sw: #0729 ,for reset 
         velPublisher.publish(vel)
         print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
@@ -130,13 +131,15 @@ def Uturn():
     #vel.linear.x =0
     #vel.angular.z = 0 
     #velPublisher.publish(vel)
-    time.sleep(0.5)
-     #------------------ step3. Slide
-    now_imu = imu_y
-    vel.linear.x = 0.12 *enhance_factor
-    vel.angular.z = 0 
+    if visual_sw:
+        time.sleep(0.5)
+        #------------------ step3. Slide
+        now_imu = imu_y
+        vel.linear.x = 0.12 *enhance_factor
+        vel.angular.z = 0 
     
-    while True:
+    #while True:
+    while visual_sw: 
         velPublisher.publish(vel)
         print(imu_y)
         if abs(now_imu - imu_y) >0.03:
@@ -144,14 +147,16 @@ def Uturn():
     #vel.linear.x =0
     #vel.angular.z = 0 
     #velPublisher.publish(vel)
-    time.sleep(0.5)
-    #----------------- step4. turn
-    now_imu =imu_theta
-    vel.linear.x = 0
-    vel.angular.z = flag * 0.15 *enhance_factor
+
+    if visual_sw: 
+        time.sleep(0.5)
+        #----------------- step4. turn
+        now_imu =imu_theta
+        vel.linear.x = 0
+        vel.angular.z = flag * 0.15 *enhance_factor
     
     
-    while True:
+    while visual_sw:
         velPublisher.publish(vel)
         print(imu_theta)
         angleDisplacement = abs(imu_theta - now_imu)
@@ -168,7 +173,9 @@ def Uturn():
     cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
     '''
-    Uturn_flag +=1
+    
+    #Uturn_flag +=1
+    Uturn_flag = Uturn_flag+1 if visual_sw else 0 
     #assert cap.isOpened() , "camera open error"
 
 def Move(State):
@@ -224,8 +231,12 @@ rosimage=ROS_image()
 rosimage.listener()
 
 velPublisher = rospy.Publisher("visual_cmd_vel",Twist,queue_size=1)
+linePublisher = rospy.Publisher("/line",Bool,queue_size=1)
+
 switchSubscribe = rospy.Subscriber("/visualSW",Bool,switch)
 angleSubscribe =rospy.Subscriber("/pose2d",Pose2D,angleRecoder,queue_size=1)
+
+
 
 FL_IR_Subscribe = rospy.Subscriber("/front_left_ir",Bool,IR_left,queue_size=1)
 FR_IR_Subscribe = rospy.Subscriber("/front_right_ir",Bool,IR_right,queue_size=1)
@@ -259,15 +270,17 @@ while not rospy.is_shutdown():
     
         IMG = cv2.resize(frame,(width,height))
         #print(visual_sw)
-        if visual_sw:
+        if 1:
         #if 1 :
             image_back , image_front = preProcessing(IMG,height,width)
             detect_front=area_detect(image_front)
             detect_back,back_angle = line_detect(image_back)
             State = [detect_front,detect_back,back_angle]
+            linePublisher.publish(detect_back)
+            
             State[0] = 1 if IR_l and IR_r else State[0]
-            #print(State)
-            Move(State)
+            if visual_sw:    
+                Move(State)
         else:
             rospy.loginfo(State)
         #output_img.write(IMG)

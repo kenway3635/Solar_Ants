@@ -162,10 +162,10 @@ int main(int argc, char **argv)
 		// transform.setRotation(q);
 		// odom_footprint.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "odom", "base_link"));
 
-		q.setRPY(0, 0, 0);
-		transform.setOrigin(tf::Vector3(0.16, -0.10, 0.1));
-		transform.setRotation(q);
-		imu.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link","imu_link"));
+		// q.setRPY(0, 0, 0);
+		// transform.setOrigin(tf::Vector3(0.16, -0.10, 0.1));
+		// transform.setRotation(q);
+		// imu.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link","imu_link"));
 
 		ros::spinOnce();
 		loop_rate.sleep();
