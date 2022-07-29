@@ -49,6 +49,10 @@ class MongoBug_MQTT(mqtt.Client):
         self.connect(self.IP,self.MQTTport,80)
         #self.connect("localhost",1883,60)
         rospy.loginfo("mqtt connection success")
+
+
+
+
         
         for topic in self.ROSTOPIC : 
             rospy.loginfo(f"Subscribe ROS topic : {topic}")
@@ -69,13 +73,9 @@ class MongoBug_MQTT(mqtt.Client):
         rospy.spin()
 
 
-
-        
-    # old version
-    # def _mqttPublish(self,msg,arg): 
-        
-    #     msg = self.msg_type_parser[arg.msgType](msg)
-    #     self.publish(arg.topic,json.dumps(msg),qos=0) 
+    def irPub(self,msg,arg):
+        self.publish(arg,json.dumps(msg),qos=1 )
+   
     
     def _updateLatch(self,msg,arg):
         self.latch[arg.topic] = self.msg_type_parser[arg.msgType](msg)
