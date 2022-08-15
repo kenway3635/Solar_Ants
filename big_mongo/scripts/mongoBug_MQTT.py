@@ -80,8 +80,8 @@ class MongoBug_MQTT(mqtt.Client):
         rospy.spin()
 
 
-    def irPub(self,msg,arg):
-        self.publish(arg,json.dumps(msg),qos=1 )
+    # def irPub(self,msg,arg):
+    #     self.publish(arg,json.dumps(msg.data),qos=1 )
    
     
     def _updateLatch(self,msg,arg):
