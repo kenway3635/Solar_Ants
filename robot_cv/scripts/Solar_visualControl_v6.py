@@ -79,9 +79,11 @@ class Robot():
         self.vehPub.publish(self.velocity)
             
     def switch_callback(self,msg): self.visual_sw = not self.visual_sw 
-    def front_callback(self,msg):self.State.Fall = msg.data 
-    def pose_callback(self,msg): self.imu_x ,self.imu_y ,self.imu_theta  = msg.x , msg.y , msg.theta 
-    
+    def front_callback(self,msg):self.State._replace(Fall=msg.data) 
+    def pose_callback(self,msg): self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
+        
+        
+
     def Move(self): 
 
         if not self.State.Fall and not self.State.Line :  
@@ -142,7 +144,8 @@ if __name__ == "__main__":
             RosImage.use_image = RosImage.raw_image.copy() 
             
             RosImage.preProcessing() 
-            SolarAnt.State.Line , SolarAnt.State.Angle = RosImage.line_detect()
+            line_detectable , line_angle  = RosImage.line_detect()
+            SolarAnt.State._replace(Line=line_detectable , Angle=line_angle)
             
             if SolarAnt.visual_sw: SolarAnt.Move() 
             rospy.loginfo(SolarAnt.State)
