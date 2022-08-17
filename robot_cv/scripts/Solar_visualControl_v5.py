@@ -257,7 +257,7 @@ while not rospy.is_shutdown():
     
     
     IMG = np.ones((360,640),dtype=np.uint8)
-    if rosimage.raw_image.any() != 0:
+    if rosimage.raw_image.any() != False:
         #cv2.imshow("raw_image",rosimage.raw_image)
         #print('rosimage=',rosimage.raw_image)
         # Control flow start
