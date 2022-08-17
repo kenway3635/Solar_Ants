@@ -122,6 +122,7 @@ int main(int argc, char **argv)
 
   vel_pub =  n.advertise<geometry_msgs::Twist>("cmd_vel", 20);
   cmd_stop =  n.advertise<std_msgs::Bool>("cmd_stop",1);
+  front_detect_pub = n.advertise<std_msgs::Bool>("front_detect",1);
   vel_sub = n.subscribe("new_cmd_vel", 10, velCallback);
   vel_camera = n.subscribe("visual_cmd_vel", 10, Cam_velCallback);
   //-----------------------------------------------------------------------------
@@ -134,27 +135,23 @@ mode_sub=n.subscribe("/Mode",1,Mode);
 click_sub=n.subscribe("click",1,clickCallback);
 odom_sub = n.subscribe("odom", 1, odomCallback);
 pub_pose = n.advertise<geometry_msgs::Pose2D>("pose2d", 10);
-//---params for odom+imu path planning---//
-int state =1;
-float length=0.7;
-float wide = 0.1;
-float error_x,error_y,error_theta;
-float error_linear_thresh=0.05;
-float error_angular_thresh=0.1;
-//---------------------------------------
+
 ros::Time::init();
 ros::Rate r(10);
-float last_linear_vel=0;//save last velocity value for recovery
-float last_angular_vel=0;
+float last_linear_vel(0);//save last velocity value for recovery
+float last_angular_vel(0);
 bool stamp= false;
 bool stop_ir_function = true;
+auto &detect = front_detect.data;
+detect = false;
 
 clock_t not_trigger,IR_trigger;
-double duration;
-float stop_time = 2;
+double duration(0);
+const float stop_time(2);
 
 while (ros::ok())
   {
+      detect = false;
       if(mode == 99)//emergency stop AMR
       {
         stop.data=true;
@@ -164,6 +161,7 @@ while (ros::ok())
       }
       else
       {
+        
         stop.data=false;
          if (mode ==1)
         {
@@ -183,7 +181,7 @@ while (ros::ok())
         }
 
 
-        if (((FL==true)||(FR==true)||(BL==true)||(BR==true)) &&(stop_ir_function == false))//cliff detected
+        if (((FL==true)||(FR==true)||(BL==true)||(BR==true)) &&(stop_ir_function == true))//cliff detected
           {
             IR_trigger = clock();
             duration = (double)(IR_trigger-not_trigger)/10000;
@@ -207,6 +205,7 @@ while (ros::ok())
               }
               else if ((FL==true)||(FR==true))
               {
+                detect = true;
                 new_vel.linear.x =-0.4;
                 new_vel.angular.z=0;
               }
@@ -232,7 +231,6 @@ while (ros::ok())
             ROS_INFO("Manual");
             new_vel.linear.x = Vel_x;
             new_vel.angular.z= Ang_z;
-            state=1;
           }
           else if(mode == 0)//camera control
           {
@@ -254,6 +252,8 @@ while (ros::ok())
  
   vel_pub.publish(new_vel);
   cmd_stop.publish(stop);
+  front_detect_pub.publish(front_detect);
+
   ros::spinOnce();
   r.sleep();
   

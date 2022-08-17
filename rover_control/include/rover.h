@@ -10,6 +10,7 @@
 
 ros::Publisher vel_pub;
 ros::Publisher cmd_stop;
+ros::Publisher front_detect_pub;
 ros::Subscriber vel_sub;
 ros::Subscriber vel_camera;
 ros::Subscriber front_right;
@@ -22,6 +23,7 @@ ros::Subscriber click_sub;
 ros::Publisher pub_pose;
 geometry_msgs::Twist new_vel;
 std_msgs::Bool stop;
+std_msgs::Bool front_detect;
 
 float Vel_x,Ang_z,cam_vel_x,cam_ang_z;
 bool FL,FR,BL,BR,cliff,button;
