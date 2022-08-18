@@ -1,3 +1,6 @@
+#! /usr/bin/python
+# -*- coding:utf-8 -*-
+
 import cv2 , datetime, rospy ,time,math   
 import numpy as np 
 from geometry_msgs.msg import Twist , Pose2D 
