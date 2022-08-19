@@ -1,6 +1,7 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 
+from itertools import accumulate
 import cv2 , datetime, rospy ,time,math   
 import numpy as np 
 from geometry_msgs.msg import Twist , Pose2D 
@@ -28,28 +29,33 @@ class ROS_image():
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
         self.use_image =  cv2.cvtColor(self.use_image,cv2.COLOR_BGR2GRAY)  
-        self.use_image = cv2.GaussianBlur(self.use_image,(9,9),2) 
-        self.use_image = cv2.Canny(self.use_image,24,114,apertureSize = 3 ) 
-        self.use_image = cv2.morphologyEx(self.use_image,cv2.MORPH_CLOSE,self.kernel,iterations=2 )
+        self.use_image = cv2.GaussianBlur(self.use_image,(3,3),1) 
+        self.use_image = cv2.Canny(self.use_image,120,200,apertureSize = 3 ,L2gradient= True) 
+        self.use_image = cv2.morphologyEx(self.use_image,cv2.MORPH_CLOSE,self.kernel,iterations=1 )
         
         #TODO 可能需要切掉部份區域
-    def line_detect(self,minlineLength = 60 , maxlineGap = 15): 
+    def line_detect(self,minlineLength = 200 , maxlineGap = 18): 
       
         linePoint = cv2.HoughLinesP(self.use_image,1,np.pi/180 , 
                                     50,None,minlineLength,maxlineGap) 
         #print("test: linepoint",linePoint)
         try: 
             # find the longest line in this frame 
-            length = 0 
+            count,accumulation_angle = 0 , 0
             for x1,y1,x2,y2  in np.resize(linePoint,(linePoint.shape[0],4)): 
-               # if abs(y2-y1) <  abs(x2-x1) : continue
-                length_temp = (x2-x1)**2 + (y2-y1)**2 
-                if length_temp > length : 
-                    length = length_temp 
-                    edgePoint = [x1,y1,x2,y2] 
-            cv2.line(self.use_image,(edgePoint[0],edgePoint[1]) ,(edgePoint[2],edgePoint[3]),(0,255,0),2)
-            angle = math.atan2(y2-y1 , abs(x2-x1)+0.001  ) * 57.3 
-            detectable = True 
+                if abs(y2-y1) <  abs(x2-x1) : continue
+                if (x2-x1)**2 + (y2-y1)**2 > 100: 
+                    cv2.line(self.use_image,(x1,y1),(x2,y2),(0,255,0),5)
+                    count+=1 
+                    accumulation_angle += math.atan2(x2-x1,abs(y2-y1)+0.001) * 57.3 
+
+            if count: 
+                angle = accumulation_angle/count 
+                detectable = True 
+            else:
+                angle = 0 
+                detectable = False
+        
         except: 
             angle = 0 
             detectable = False  
@@ -81,7 +87,7 @@ class Robot():
         self.velocity.linear.x = x * self.enhance_factor * reverse
         self.velocity.angular.z = z * self.enhance_factor * reverse
         self.vehPub.publish(self.velocity)
-        print("pub")   
+        
     def switch_callback(self,msg): self.visual_sw = not self.visual_sw 
     def front_callback(self,msg):self.State._replace(Fall=msg.data) 
     def pose_callback(self,msg): self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
