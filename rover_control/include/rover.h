@@ -21,9 +21,12 @@ ros::Subscriber mode_sub;
 ros::Subscriber odom_sub;
 ros::Subscriber click_sub;
 ros::Publisher pub_pose;
+ros::Publisher visualSW_pub;
+
 geometry_msgs::Twist new_vel;
 std_msgs::Bool stop;
 std_msgs::Bool front_detect;
+std_msgs::Bool visualSW_data;
 
 float Vel_x,Ang_z,cam_vel_x,cam_ang_z;
 bool FL,FR,BL,BR,cliff,button;

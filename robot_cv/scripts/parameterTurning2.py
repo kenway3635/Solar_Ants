@@ -100,7 +100,7 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
         linePoints = np.resize(linePoints,(linePoints.shape[0],4))
         for i in range(linePoints.shape[0]):
             x1,y1,x2,y2 = linePoints[i]
-            if abs(y2-y1) > abs(x2-x1) : continue  
+            if abs(y2-y1)> abs(x2-x1) : continue  
             length_buffer = (x2-x1)**2 + (y2-y1)**2 
             if length_buffer > length:
                 length = length_buffer
