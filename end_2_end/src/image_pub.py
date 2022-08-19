@@ -24,21 +24,24 @@ def cv2_to_imgmsg(cv_image):
 
 cap = cv2.VideoCapture(3)
 # 設定影像的尺寸大小
-cap.set(cv2.CAP_PROP_FRAME_WIDTH,640)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT,360)
+#cap.set(cv2.CAP_PROP_FRAME_WIDTH,320)
+#cap.set(cv2.CAP_PROP_FRAME_HEIGHT,180)
 #fps
-cap.set(cv2.CAP_PROP_FPS , 30)
+#cap.set(cv2.CAP_PROP_FPS , 24)
 #set maxium buffer size
-cap.set(cv2.CAP_PROP_BUFFERSIZE, 20)
+#cap.set(cv2.CAP_PROP_BUFFERSIZE, 20)
 #disable auto focus
-cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+#cap.set(cv2.CAP_PROP_AUTOFOCUS, 0)
+#cap.set(cv2.CAP_PROP_FOCUS, 42)
+#sety exposure time
+#cap.set(cv2.CAP_PROP_EXPOSURE,100)
 #set image bit channels
 start_node()
 bridge = CvBridge()
 pub = rospy.Publisher('image', Image, queue_size=5)
-while (True):
+while cap.isOpened() :
   ret, frame = cap.read()
-  #frame=cv2.resize(frame,(128,128))
+  frame=cv2.resize(frame,(320,180))
   cv2.imshow('frame', frame)
   imgMsg = cv2_to_imgmsg(frame)
   pub.publish(imgMsg)
@@ -47,5 +50,5 @@ while (True):
     cap.release()
     cv2.destroyAllWindows()
     break
-  rospy.Rate(20).sleep()  # 10 Hz
+  rospy.Rate(10).sleep()  # 10 Hz
 #rospy.spin()

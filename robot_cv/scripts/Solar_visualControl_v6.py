@@ -1,7 +1,7 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 
-from itertools import accumulate
+
 import cv2 , datetime, rospy ,time,math   
 import numpy as np 
 from geometry_msgs.msg import Twist , Pose2D 
@@ -9,15 +9,19 @@ from std_msgs.msg import String,Int64, Bool,Float32
 from cv_bridge import CvBridge 
 from sensor_msgs.msg import Image 
 from collections import namedtuple 
-import argparse 
+import argparse , time  
 # ---------- ROS Image subscriber ------------
 class ROS_image(): 
     def __init__(self): 
     
         self.bridge = CvBridge() 
-        self.height ,self.width = 360 ,640
-        self.margin = int(0.1*self.width) 
-        self.kernel = np.ones( (3,3),np.uint8 )
+        self.height ,self.width = 180 ,320
+        self.margin = int(0.1*self.width)
+        self.kernel_dilate = np.ones((3,3),np.uint8)
+        self.kernel_erode = np.ones( (3,3),np.uint8 )
+        self.sobel_kernel = np.array(
+        [[-1,2,-1] , [-1,2,-1] ,[-1,2,-1] ] ,dtype=np.int8 ) 
+            
         self.raw_image = np.zeros((180,320,3) , dtype=np.uint8)
         self.use_image = None
         try:self.listener()
@@ -28,26 +32,43 @@ class ROS_image():
 
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
+    
         self.use_image =  cv2.cvtColor(self.use_image,cv2.COLOR_BGR2GRAY)  
-        self.use_image = cv2.GaussianBlur(self.use_image,(3,3),1) 
-        self.use_image = cv2.Canny(self.use_image,120,200,apertureSize = 3 ,L2gradient= True) 
-        self.use_image = cv2.morphologyEx(self.use_image,cv2.MORPH_CLOSE,self.kernel,iterations=1 )
-        
+        self.use_image = cv2.GaussianBlur(self.use_image,(3,3),sigmaX=1) 
+        #self.use_image = cv2.filter2D(self.use_image,-1,self.sobel_kernel,delta=0)
+        self.use_image = cv2.Canny(self.use_image,150,225,apertureSize = 3 ,L2gradient= True) 
+        self.use_image = cv2.dilate(self.use_image,self.kernel_dilate,iterations=2)
+        self.use_image = cv2.erode(self.use_image , self.kernel_erode , iterations=1)
+        #self.use_image = cv2.morphologyEx(self.use_image,cv2.MORPH_CLOSE,self.kernel,iterations=1 )
         #TODO 可能需要切掉部份區域
-    def line_detect(self,minlineLength = 200 , maxlineGap = 18): 
-      
+    def line_detect(self,minlineLength = 60 , maxlineGap = 50): 
+        #self.use_image = cv2.bitwise_not(self.use_image)
+        cv2.imshow("test",self.use_image)
         linePoint = cv2.HoughLinesP(self.use_image,1,np.pi/180 , 
                                     50,None,minlineLength,maxlineGap) 
         #print("test: linepoint",linePoint)
         try: 
             # find the longest line in this frame 
             count,accumulation_angle = 0 , 0
-            for x1,y1,x2,y2  in np.resize(linePoint,(linePoint.shape[0],4)): 
-                if abs(y2-y1) <  abs(x2-x1) : continue
-                if (x2-x1)**2 + (y2-y1)**2 > 100: 
-                    cv2.line(self.use_image,(x1,y1),(x2,y2),(0,255,0),5)
-                    count+=1 
-                    accumulation_angle += math.atan2(x2-x1,abs(y2-y1)+0.001) * 57.3 
+            
+            itee = np.resize(linePoint,(linePoint.shape[0] ,4 )) 
+            
+            for x1,y1,x2,y2  in itee:
+                
+                
+                if abs(y2-y1) >  abs(x2-x1) : 
+                    
+                    if (x2-x1)**2 + (y2-y1)**2 > 100: 
+                        
+                        cv2.line(self.raw_image,(x1,y1),(x2,y2),(0,255,0),5)
+                        count+=1 
+                        cal_angle= math.atan2(x2-x1,abs(y2-y1)+0.001) * 57.3
+                        if y2-y1<0:
+                            cal_angle =cal_angle*(-1)
+                        print("x2-x1 = ",x2-x1,"y2-y1 = ",y2-y1)
+                        accumulation_angle +=cal_angle
+                        
+                        
 
             if count: 
                 angle = accumulation_angle/count 
@@ -145,23 +166,26 @@ if __name__ == "__main__":
     
     rospy.init_node("visualControl" , anonymous=True)
 
-    SolarAnt = Robot(enhance_factor=parser.parse_args().speed if parser.parse_args().speed else 1)
+    SolarAnt = Robot(enhance_factor=float(parser.parse_args().speed) if parser.parse_args().speed else 1)
     RosImage =ROS_image() 
     
     while not rospy.is_shutdown(): 
         RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8) 
         
-        if RosImage.raw_image.any() == True: 
+        if RosImage.raw_image.any() == True:
+            print(RosImage.raw_image.shape)
+            start = time.time()
             RosImage.use_image = RosImage.raw_image.copy() 
             
             RosImage.preProcessing() 
             line_detectable , line_angle  = RosImage.line_detect()
-            SolarAnt.State._replace(Line=line_detectable , Angle=line_angle)
-            
+            SolarAnt.State = SolarAnt.State._replace(Line=line_detectable,Angle=line_angle)
+            #print(f"line_detect {line_detectable} , line angle {line_angle}")
             if SolarAnt.visual_sw: SolarAnt.Move() 
             rospy.loginfo(SolarAnt.State)
-        cv2.imshow("Frame",RosImage.use_image)
-        if cv2.waitKey(100) & 0xFF == ord("q"): 
+            print(time.time() - start)
+        cv2.imshow("Frame",RosImage.raw_image)
+        if cv2.waitKey(200) & 0xFF == ord("q"): 
             break 
     cv2.destroyAllWindows() 
     

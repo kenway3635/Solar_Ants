@@ -50,7 +50,7 @@
   	</node>-->
 
 
-        <!-- <node name="cap_node" pkg="end_2_end" type="image_pub.py" output="screen"/>  -->
+        <node name="cap_node" pkg="end_2_end" type="image_pub.py" output="screen"/> 
         <!-- <node name="Solar_visualControl_v6" pkg="robot_cv" type="Solar_visualControl_v6.py" output="screen"/>  -->
 
 	<node pkg="rosserial_python" type="serial_node.py" name="serial_node">

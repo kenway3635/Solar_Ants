@@ -52,16 +52,20 @@ cv2.setTrackbarPos("Erode_iter","line_detect",1)
 kernel_line = np.ones((3,3),np.uint8)
 erode = np.ones((3,3),np.uint8)
 blurKernel_size  = 3
-height = 360
-width=640
+height = 180
+width=320
 #margin =  int(cv2.getTrackbarPos("marginSize","area_detect")*0.01 *width )
 enhance_factor = 1 
-
+"""
 deNoise_kernel = np.array(
     [[5,5,5,5,5],[1,1,1,1,1],[1,1,1,1,1],[1,1,1,1,1],[5,5,5,5,5]]
     ,dtype =  np.int8 
 )
-deNoise_kernel = deNoise_kernel / deNoise_kernel.sum()
+"""
+deNoise_kernel = np.array(
+  [  [-1,2,-1] ,[-1,2,-1],[-1,2,-1] ]  , dtype=np.int8 
+        )
+#deNoise_kernel = deNoise_kernel / deNoise_kernel.sum()
 
 #print(deNoise_kernel)
 def line_detect(image,minlineLength=None,maxlineGap=None):
@@ -78,11 +82,12 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
     edgePoint = []
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     # Filter \\\
+    
     blur = cv2.GaussianBlur(gray,(blurKernel_size,blurKernel_size),sigmaX=1)
     #blur = cv2.medianBlur(gray,blurKernel_size)
     
-    #blur = cv2.filter2D(gray,-1,deNoise_kernel , delta=-5)
-    cv2.imshow("before Canny",blur)
+    #blur = cv2.filter2D(gray,-1,deNoise_kernel , delta=0)
+    #cv2.imshow("before Canny",blur)
     #ret ,blur = cv2.threshold(blur,127,255,cv2.THRESH_OTSU) 
     edges = cv2.Canny(blur,canny_lb,canny_ub,apertureSize=3,L2gradient = True)
     #edges = (255-edges)
@@ -91,8 +96,11 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
     edges = cv2.dilate(edges,kernel_line,iterations=Dilate_iter)
     edges = cv2.erode(edges,erode,iterations=Erode_iter)
     
-    print(edges.shape)
+    #print(edges.shape)
+    
+    #edges = cv2.bitwise_not(edges)
     cv2.imshow("edges",edges)
+
     #if find something(line) go into try: or go to except
     linePoints = cv2.HoughLinesP(edges,1,np.pi/180,Hough,None,minlineLength,maxlineGap)
     try:
@@ -107,7 +115,7 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
            # x1,y1,x2,y2 = linePoints[i]
             if (abs(y2-y1)> abs(x2-x1))  :
                 length_buffer = (x2-x1)**2 + (y2-y1)**2
-                if length_buffer > 100:
+                if length_buffer > 1:
                     cv2.line(image,(x1,y1),(x2,y2),(0,225,0),10)
                     added_angle += math.atan2( y2-y1 , abs(x2-x1)) *57.3
                     count +=1
@@ -117,7 +125,6 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
         else:
             angle = 0                    
         #print(edgePoint)
-        print("DODODO")
         #cv2.line(image,(edgePoint[0],edgePoint[1]),(edgePoint[2],edgePoint[3]),(0,225,0),10)
         #angle = math.atan2( x2-x1 , abs(y2-y1)) *57.3
         #angle = math.atan2( y2-y1 , abs(x2-x1)) *57.3
