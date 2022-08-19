@@ -119,7 +119,8 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
         print(edgePoint)
 
         cv2.line(image,(edgePoint[0],edgePoint[1]),(edgePoint[2],edgePoint[3]),(0,225,0),2)
-        angle = math.atan2( x2-x1 , abs(y2-y1)) *57.3
+       # angle = math.atan2( x2-x1 , abs(y2-y1)) *57.3
+        angle = math.atan2( y2-y1 , abs(x2-x1)) *57.3
         detectable = True
         
     except:

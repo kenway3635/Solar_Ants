@@ -56,10 +56,11 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
     detectable = False
     edgePoint = []
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    gray = cv2.GaussianBlur(gray,(7,7),sigmaX=1)
+    gray = cv2.GaussianBlur(gray,(9,9),sigmaX=2)
     #edges = cv2.Canny(image,120,200,apertureSize=3)
-    edges = cv2.Canny(image,canny_lb,canny_ub,apertureSize=3)
+    edges = cv2.Canny(gray,canny_lb,canny_ub,apertureSize=3)
     edges = cv2.morphologyEx(edges,cv2.MORPH_CLOSE,kernel_line,iterations=CLOSE_iter)
+
     cv2.imshow("edges",edges)
     #if find something(line) go into try: or go to except
     linePoints = cv2.HoughLinesP(edges,1,np.pi/180,80,None,minlineLength,maxlineGap)
@@ -69,7 +70,7 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
         linePoints = np.resize(linePoints,(linePoints.shape[0],4))
         for i in range(linePoints.shape[0]):
             x1,y1,x2,y2 = linePoints[i]
-            if abs(y2-y1) > abs(x2-x1) : continue  
+            if abs(y2-y1)> abs(x2-x1) : continue  
             length_buffer = (x2-x1)**2 + (y2-y1)**2 
             if length_buffer > length:
                 length = length_buffer

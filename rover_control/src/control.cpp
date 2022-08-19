@@ -125,6 +125,7 @@ int main(int argc, char **argv)
   front_detect_pub = n.advertise<std_msgs::Bool>("front_detect",1);
   vel_sub = n.subscribe("new_cmd_vel", 10, velCallback);
   vel_camera = n.subscribe("visual_cmd_vel", 10, Cam_velCallback);
+  visualSW_pub = n.advertise<std_msgs::Bool>("visualSW",1);
   //-----------------------------------------------------------------------------
   front_right = n.subscribe("front_right_ir",10,IRCallback1);
   front_left = n.subscribe("front_left_ir",10,IRCallback2);
@@ -141,6 +142,7 @@ ros::Rate r(10);
 float last_linear_vel(0);//save last velocity value for recovery
 float last_angular_vel(0);
 bool stamp= false;
+bool visual_stamp = false;
 bool stop_ir_function = true;
 auto &detect = front_detect.data;
 detect = false;
@@ -148,6 +150,7 @@ detect = false;
 clock_t not_trigger,IR_trigger;
 double duration(0);
 const float stop_time(2);
+visualSW_data.data = false;
 
 while (ros::ok())
   {
@@ -231,9 +234,20 @@ while (ros::ok())
             ROS_INFO("Manual");
             new_vel.linear.x = Vel_x;
             new_vel.angular.z= Ang_z;
+            if (visual_stamp)
+            {
+              visual_stamp = false;
+              visualSW_pub.publish(visualSW_data);
+            }
           }
           else if(mode == 0)//camera control
           {
+            if (visual_stamp == false)
+            {
+                visual_stamp = true;
+                visualSW_pub.publish(visualSW_data);
+            }
+              
             ROS_INFO("camera mode !");
             new_vel.linear.x=cam_vel_x;
             new_vel.angular.z=cam_ang_z;
