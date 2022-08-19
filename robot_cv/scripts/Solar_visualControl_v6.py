@@ -110,8 +110,8 @@ class Robot():
         self.vehPub.publish(self.velocity)
         
     def switch_callback(self,msg): self.visual_sw = not self.visual_sw 
-    def front_callback(self,msg):self.State._replace(Fall=msg.data) 
-    def pose_callback(self,msg): self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
+    def front_callback(self,msg): self.State = self.State._replace(Fall=msg.data) 
+    def pose_callback(self,msg): self.IMU = self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
         
         
 
@@ -128,7 +128,7 @@ class Robot():
             else:
                 self.newVelocity(0.1,-0.06) if self.State.Angle <0 else self.newVelocity(0.1,0.06) 
         
-        
+
     def Uturn(self): 
         rospy.loginfo("#########  Uturn !!!! #########")
         reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
