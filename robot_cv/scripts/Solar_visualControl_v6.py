@@ -99,7 +99,8 @@ class Robot():
                 self.newVelocity(0.3,0)
             else:
                 self.newVelocity(0.1,-0.06) if self.State.Angle <0 else self.newVelocity(0.1,0.06) 
-                
+        
+        
     def Uturn(self): 
         rospy.loginfo("#########  Uturn !!!! #########")
         reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
