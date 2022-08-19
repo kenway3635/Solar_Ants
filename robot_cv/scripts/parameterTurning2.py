@@ -77,15 +77,17 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
     detectable = False
     edgePoint = []
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    
     # Filter \\\
     blur = cv2.GaussianBlur(gray,(blurKernel_size,blurKernel_size),sigmaX=1)
     #blur = cv2.medianBlur(gray,blurKernel_size)
     
     #blur = cv2.filter2D(gray,-1,deNoise_kernel , delta=-5)
     cv2.imshow("before Canny",blur)
+    #ret ,blur = cv2.threshold(blur,127,255,cv2.THRESH_OTSU) 
     edges = cv2.Canny(blur,canny_lb,canny_ub,apertureSize=3,L2gradient = True)
+    #edges = (255-edges)
     #edges = cv2.morphologyEx(edges,cv2.MORPH_CLOSE,kernel_line,iterations=CLOSE_iter)
+    #edges = np.ones((360,640) ,dtype=np.uint8 )
     edges = cv2.dilate(edges,kernel_line,iterations=Dilate_iter)
     edges = cv2.erode(edges,erode,iterations=Erode_iter)
     
@@ -98,19 +100,28 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
         #print(linePoints)
         #print(type(linePoints),linePoints.shape)
         linePoints = np.resize(linePoints,(linePoints.shape[0],4))
-        for i in range(linePoints.shape[0]):
-            x1,y1,x2,y2 = linePoints[i]
-            if abs(y2-y1)> abs(x2-x1) : continue  
-            length_buffer = (x2-x1)**2 + (y2-y1)**2 
-            if length_buffer > length:
-                length = length_buffer
-                edgePoint = [x1,y1,x2,y2]
+        #for i in range(linePoints.shape[0]):
+        count =0
+        added_angle = 0
+        for x1,y1,x2,y2 in linePoints:  
+           # x1,y1,x2,y2 = linePoints[i]
+            if (abs(y2-y1)> abs(x2-x1))  :
+                length_buffer = (x2-x1)**2 + (y2-y1)**2
+                if length_buffer > 100:
+                    cv2.line(image,(x1,y1),(x2,y2),(0,225,0),10)
+                    added_angle += math.atan2( y2-y1 , abs(x2-x1)) *57.3
+                    count +=1
+        if count:
+            angle = added_angle/count
+            detectable = True
+        else:
+            angle = 0                    
         #print(edgePoint)
         print("DODODO")
-        cv2.line(image,(edgePoint[0],edgePoint[1]),(edgePoint[2],edgePoint[3]),(0,225,0),10)
+        #cv2.line(image,(edgePoint[0],edgePoint[1]),(edgePoint[2],edgePoint[3]),(0,225,0),10)
         #angle = math.atan2( x2-x1 , abs(y2-y1)) *57.3
-        angle = math.atan2( y2-y1 , abs(x2-x1)) *57.3
-        detectable = True
+        #angle = math.atan2( y2-y1 , abs(x2-x1)) *57.3
+        #detectable = True
         
     except:
         #print("linepoint no detect")
@@ -118,7 +129,7 @@ def line_detect(image,minlineLength=None,maxlineGap=None):
     
     return detectable , angle
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(3)
 assert cap.isOpened() ,"cap error"
 
 while cap.isOpened() :
