@@ -105,12 +105,21 @@ float PID(float err,float Last_err,float kp,float ki,float kd,float upper_lim,fl
 }
 
 float go_minimum(float velocity)//check minimum of the input command
-{
-  if (abs(velocity)<0.06)
+{ 
+
+  if (velocity<0)
+    velocity = -0.2;
+  else if (velocity>0)
+    velocity=0.2;
+  else 
+    velocity = 0;
+  /*
+  else if (abs(velocity)<0.06)
   {
   if (velocity<0){velocity = -0.06;}
   else if (velocity>0){velocity=0.06;}
   }
+  */
   return velocity;
 }
 
@@ -143,13 +152,13 @@ float last_linear_vel(0);//save last velocity value for recovery
 float last_angular_vel(0);
 bool stamp= false;
 bool visual_stamp = false;
-bool stop_ir_function = true;
+bool ir_function = true;
 auto &detect = front_detect.data;
 detect = false;
 
 clock_t not_trigger,IR_trigger;
 double duration(0);
-const float stop_time(2);
+const float stop_time(0.5);
 visualSW_data.data = false;
 
 while (ros::ok())
@@ -184,37 +193,39 @@ while (ros::ok())
         }
 
 
-        if (((FL==true)||(FR==true)||(BL==true)||(BR==true)) &&(stop_ir_function == true))//cliff detected
+        if (((FL==true)||(FR==true)||(BL==true)||(BR==true)) &&(ir_function == true))//cliff detected
           {
             IR_trigger = clock();
             duration = (double)(IR_trigger-not_trigger)/10000;
             ROS_INFO("trigger duration time = %f",duration);
             //ROS_INFO("cliff  detected!!, doing self recovery");
             stamp = true;
-            new_vel.linear.x = go_minimum(last_linear_vel*(stop_time-duration)/stop_time);
-            new_vel.angular.z = go_minimum(last_angular_vel*(stop_time-duration)/stop_time);
+            //new_vel.linear.x = go_minimum(last_linear_vel*(stop_time-duration)/stop_time);
+            //new_vel.angular.z = go_minimum(last_angular_vel*(stop_time-duration)/stop_time);
+            new_vel.linear.x = go_minimum(last_linear_vel);
+            new_vel.angular.z = go_minimum(last_angular_vel);
 
             if (duration > stop_time)
             {
               if((FL==true)&&(BL==true))
               {
                 new_vel.linear.x =0;
-                new_vel.angular.z=-0.4;
+                new_vel.angular.z=-0.2;
               }
               else if((FR==true)&&(BR==true))
               {
                 new_vel.linear.x =0;
-                new_vel.angular.z=0.4;
+                new_vel.angular.z=0.2;
               }
               else if ((FL==true)||(FR==true))
               {
                 detect = true;
-                new_vel.linear.x =-0.4;
+                new_vel.linear.x =-0.2;
                 new_vel.angular.z=0;
               }
               else if((BL==true)||(BR==true))
               { 
-                new_vel.linear.x =0.4;
+                new_vel.linear.x =0.2;
                 new_vel.angular.z=0;
               }
             }

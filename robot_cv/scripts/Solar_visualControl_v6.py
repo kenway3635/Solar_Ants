@@ -138,7 +138,7 @@ class Robot():
         # stage1 : turn 90 
         imu_temp = self.IMU.theta 
         while self.visual_sw: 
-            self.newVelocity(0,0.15,reverse) 
+            self.newVelocity(0,0.5,reverse) 
             if 300 >= abs(self.IMU.theta - imu_temp ) >= 60 : break 
             rospy.loginfo(f"First turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
         # stage2 : go forward 
@@ -151,9 +151,9 @@ class Robot():
         # stage3 : turn 90 
         imu_temp = self.IMU.theta 
         while self.visual_sw: 
-            self.newVelocity(0,0.15,reverse) 
+            self.newVelocity(0,0.5,reverse) 
             if 300 >= abs(self.IMU.theta - imu_temp ) >= 60 : break 
-            rospy.loginfo(f"First turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
+            rospy.loginfo(f"Second turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
         
         rospy.loginfo(" Utrun complete ! ")
         self.flag = self.flag+1 if self.visual_sw else 0 
