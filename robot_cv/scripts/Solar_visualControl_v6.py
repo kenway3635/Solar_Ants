@@ -10,6 +10,7 @@ from cv_bridge import CvBridge
 from sensor_msgs.msg import Image 
 from collections import namedtuple 
 import argparse , time  
+import threading 
 # ---------- ROS Image subscriber ------------
 class ROS_image(): 
     def __init__(self): 
@@ -88,6 +89,7 @@ class Robot():
     def __init__(self,enhance_factor=1): 
         self.visual_sw = False 
         self.flag = 0
+        self.inUturn = False 
         self.IR_left,self.IR_Right = None ,None 
         self.enhance_factor = enhance_factor
         self.IMU = namedtuple("IMU",["x","y","theta"])(None,None,None)
@@ -121,7 +123,8 @@ class Robot():
             self.newVelocity(0.3,0)
         elif self.State.Fall : 
             rospy.loginfo("Stop ! ")
-            self.Uturn() 
+            Uturn = threading.Thread(target=self.Uturn) 
+            Uturn.start() 
         elif not self.State.Fall and self.State.Line: 
             if abs(self.State.Angle) <= 5 : 
                 self.newVelocity(0.3,0)
@@ -131,6 +134,7 @@ class Robot():
 
     def Uturn(self): 
         rospy.loginfo("#########  Uturn !!!! #########")
+        self.inUturn = True 
         reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
         
         if not self.IMU.x : raise BaseException("IMU Bug")
@@ -157,7 +161,7 @@ class Robot():
         
         rospy.loginfo(" Utrun complete ! ")
         self.flag = self.flag+1 if self.visual_sw else 0 
-        
+        self.inUturn = False 
         
 
 if __name__ == "__main__": 
@@ -169,12 +173,11 @@ if __name__ == "__main__":
     SolarAnt = Robot(enhance_factor=float(parser.parse_args().speed) if parser.parse_args().speed else 1)
     RosImage =ROS_image() 
     
+    RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8) 
     while not rospy.is_shutdown(): 
-        RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8) 
-        
-        if RosImage.raw_image.any() == True:
-            print(RosImage.raw_image.shape)
-            start = time.time()
+            
+        if RosImage.raw_image.any() == True and not SolarAnt.inUturn:
+            
             RosImage.use_image = RosImage.raw_image.copy() 
             
             RosImage.preProcessing() 
@@ -183,7 +186,7 @@ if __name__ == "__main__":
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
             if SolarAnt.visual_sw: SolarAnt.Move() 
             rospy.loginfo(SolarAnt.State)
-            print(time.time() - start)
+            
         cv2.imshow("Frame",RosImage.raw_image)
         if cv2.waitKey(200) & 0xFF == ord("q"): 
             break 
