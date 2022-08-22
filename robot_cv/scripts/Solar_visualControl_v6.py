@@ -51,23 +51,23 @@ class ROS_image():
             # find the longest line in this frame 
             count,accumulation_angle = 0 , 0
             
-            itee = np.resize(linePoint,(linePoint.shape[0] ,4 )) 
+            Line_set = np.resize(linePoint,(linePoint.shape[0] ,4 )) 
             
-            for x1,y1,x2,y2  in itee:
+
+            for x1,y1,x2,y2  in Line_set:
                 
                 
                 if abs(y2-y1) >  abs(x2-x1) : 
-                    
-                    if (x2-x1)**2 + (y2-y1)**2 > 100: 
+                    if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
                         
                         cv2.line(self.raw_image,(x1,y1),(x2,y2),(0,255,0),5)
                         count+=1 
                         cal_angle= math.atan2(x2-x1,abs(y2-y1)+0.001) * 57.3
                         if y2-y1<0:
                             cal_angle =cal_angle*(-1)
-                        print("x2-x1 = ",x2-x1,"y2-y1 = ",y2-y1)
+                        #print("x2-x1 = ",x2-x1,"y2-y1 = ",y2-y1)
                         accumulation_angle +=cal_angle
-                        
+ 
                         
 
             if count: 
