@@ -183,6 +183,7 @@ if __name__ == "__main__":
             RosImage.preProcessing() 
             line_detectable , line_angle  = RosImage.line_detect()
             SolarAnt.State = SolarAnt.State._replace(Line=line_detectable,Angle=line_angle)
+            SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
             if SolarAnt.visual_sw: SolarAnt.Move() 
             rospy.loginfo(SolarAnt.State)
