@@ -147,12 +147,12 @@ odom_sub = n.subscribe("odom", 1, odomCallback);
 pub_pose = n.advertise<geometry_msgs::Pose2D>("pose2d", 10);
 
 ros::Time::init();
-ros::Rate r(10);
+ros::Rate r(100);
 float last_linear_vel(0);//save last velocity value for recovery
 float last_angular_vel(0);
 bool stamp= false;
 bool visual_stamp = false;
-bool ir_function = true;
+bool ir_stamp=false;
 auto &detect = front_detect.data;
 detect = false;
 
@@ -193,7 +193,7 @@ while (ros::ok())
         }
 
 
-        if (((FL==true)||(FR==true)||(BL==true)||(BR==true)) &&(ir_function == true))//cliff detected
+        if ((FL==true)||(FR==true)||(BL==true)||(BR==true))//cliff detected
           {
             IR_trigger = clock();
             duration = (double)(IR_trigger-not_trigger)/10000;
@@ -207,31 +207,44 @@ while (ros::ok())
 
             if (duration > stop_time)
             {
-              if((FL==true)&&(BL==true))
+              if (ir_stamp)
+              {
+                stop.data=true;
+                new_vel.linear.x =0;
+                new_vel.angular.z=0;
+                ir_stamp = false;
+              }
+              
+              else if((FL==true)&&(BL==true))
               {
                 new_vel.linear.x =0;
-                new_vel.angular.z=-0.2;
+                new_vel.angular.z=-0.1;
               }
               else if((FR==true)&&(BR==true))
               {
                 new_vel.linear.x =0;
-                new_vel.angular.z=0.2;
+                new_vel.angular.z=0.1;
               }
               else if ((FL==true)||(FR==true))
               {
-                detect = true;
-                new_vel.linear.x =-0.2;
+                
+                new_vel.linear.x =-0.1;
                 new_vel.angular.z=0;
               }
               else if((BL==true)||(BR==true))
               { 
-                new_vel.linear.x =0.2;
+                new_vel.linear.x =0.1;
                 new_vel.angular.z=0;
               }
+              if ((FR)&&(FL))
+                detect = true;
+              else
+                detect = false;
             }
           }
         else
         {
+          ir_stamp = true;
           not_trigger = clock();
           if (stamp == true)
           {
