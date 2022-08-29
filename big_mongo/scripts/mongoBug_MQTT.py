@@ -47,8 +47,8 @@ class MongoBug_MQTT(mqtt.Client):
         self.publish(arg,json.dumps(msg.data),qos=0)
     
     def linePub(self,msg):
-        self.publish("/line",json.dumps(msg.data),qos=1)
-        
+        self.publish("/line",json.dumps(msg.data),qos=0)
+        rospy.loginfo("pub line")
         pass 
     #main function for ros thread
     def _reigister(self): 

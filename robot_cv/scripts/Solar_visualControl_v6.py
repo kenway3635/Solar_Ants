@@ -129,7 +129,11 @@ class Robot():
             if abs(self.State.Angle) <= 5 : 
                 self.newVelocity(0.3,0)
             else:
-                self.newVelocity(0.1,-0.06) if self.State.Angle <0 else self.newVelocity(0.1,0.06) 
+                if self.State.Angle > 0 :  
+                    print("left turn !")   
+                else: print("right turn !")
+            
+                self.newVelocity(0.12,-0.1) if self.State.Angle <0 else self.newVelocity(0.12,0.1) 
         
 
     def Uturn(self): 
@@ -143,7 +147,7 @@ class Robot():
         imu_temp = self.IMU.theta 
         while self.visual_sw: 
             self.newVelocity(0,0.5,reverse) 
-            if 315 >= abs(self.IMU.theta - imu_temp ) >= 75 : break 
+            if 285 >= abs(self.IMU.theta - imu_temp ) >= 75 : break 
             rospy.loginfo(f"First turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
         # stage2 : go forward 
         if self.visual_sw: 
@@ -156,7 +160,7 @@ class Robot():
         imu_temp = self.IMU.theta 
         while self.visual_sw: 
             self.newVelocity(0,0.5,reverse) 
-            if 315 >= abs(self.IMU.theta - imu_temp ) >= 75 : break 
+            if 285 >= abs(self.IMU.theta - imu_temp ) >= 75 : break 
             rospy.loginfo(f"Second turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
         
         rospy.loginfo(" Utrun complete ! ")

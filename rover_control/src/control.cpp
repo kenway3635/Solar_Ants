@@ -106,20 +106,21 @@ float PID(float err,float Last_err,float kp,float ki,float kd,float upper_lim,fl
 
 float go_minimum(float velocity)//check minimum of the input command
 { 
-
+/*
   if (velocity<0)
     velocity = -0.2;
   else if (velocity>0)
     velocity=0.2;
   else 
     velocity = 0;
-  /*
-  else if (abs(velocity)<0.06)
+  */  
+  
+  if (abs(velocity)<0.06)
   {
   if (velocity<0){velocity = -0.06;}
   else if (velocity>0){velocity=0.06;}
   }
-  */
+  
   return velocity;
 }
 
@@ -147,7 +148,7 @@ odom_sub = n.subscribe("odom", 1, odomCallback);
 pub_pose = n.advertise<geometry_msgs::Pose2D>("pose2d", 10);
 
 ros::Time::init();
-ros::Rate r(100);
+ros::Rate r(30);
 float last_linear_vel(0);//save last velocity value for recovery
 float last_angular_vel(0);
 bool stamp= false;
@@ -156,13 +157,17 @@ bool ir_stamp=false;
 auto &detect = front_detect.data;
 detect = false;
 
-clock_t not_trigger,IR_trigger;
-double duration(0);
-const float stop_time(0.5);
+double not_trigger(0),IR_trigger(0),duration(0), stop_time(0), recovery_vel(0);
+
+n.getParam("/rover_control/time_to_stop",stop_time);
+n.getParam("/rover_control/recovery_vel",recovery_vel);
+
 visualSW_data.data = false;
 
 while (ros::ok())
   {
+      ROS_INFO("time_to_stop is %f, recovery vel is %f",stop_time,recovery_vel);
+      
       detect = false;
       if(mode == 99)//emergency stop AMR
       {
@@ -177,39 +182,33 @@ while (ros::ok())
         stop.data=false;
          if (mode ==1)
         {
-          if ((Vel_x != 0) || (Ang_z != 0))
-          {
           last_linear_vel = Vel_x;
           last_angular_vel = Ang_z;
-          }
         }
         else if (mode ==0)
         {
-          if ((cam_vel_x != 0) || (cam_ang_z != 0))
-            {
             last_linear_vel=cam_vel_x;
             last_angular_vel=cam_ang_z;
-            }
         }
 
 
         if ((FL==true)||(FR==true)||(BL==true)||(BR==true))//cliff detected
           {
-            IR_trigger = clock();
-            duration = (double)(IR_trigger-not_trigger)/10000;
+            IR_trigger = ros::Time::now().toSec();
+            duration = (double)(IR_trigger-not_trigger);
             ROS_INFO("trigger duration time = %f",duration);
             //ROS_INFO("cliff  detected!!, doing self recovery");
             stamp = true;
             //new_vel.linear.x = go_minimum(last_linear_vel*(stop_time-duration)/stop_time);
             //new_vel.angular.z = go_minimum(last_angular_vel*(stop_time-duration)/stop_time);
-            new_vel.linear.x = go_minimum(last_linear_vel);
-            new_vel.angular.z = go_minimum(last_angular_vel);
+            new_vel.linear.x = last_linear_vel;
+            new_vel.angular.z = last_angular_vel;
 
             if (duration > stop_time)
             {
               if (ir_stamp)
               {
-                stop.data=true;
+                //stop.data=true;
                 new_vel.linear.x =0;
                 new_vel.angular.z=0;
                 ir_stamp = false;
@@ -218,22 +217,22 @@ while (ros::ok())
               else if((FL==true)&&(BL==true))
               {
                 new_vel.linear.x =0;
-                new_vel.angular.z=-0.1;
+                new_vel.angular.z=-recovery_vel;
               }
               else if((FR==true)&&(BR==true))
               {
                 new_vel.linear.x =0;
-                new_vel.angular.z=0.1;
+                new_vel.angular.z=recovery_vel;
               }
               else if ((FL==true)||(FR==true))
               {
                 
-                new_vel.linear.x =-0.1;
+                new_vel.linear.x =-recovery_vel;
                 new_vel.angular.z=0;
               }
               else if((BL==true)||(BR==true))
               { 
-                new_vel.linear.x =0.1;
+                new_vel.linear.x =recovery_vel;
                 new_vel.angular.z=0;
               }
               if ((FR)&&(FL))
@@ -245,10 +244,10 @@ while (ros::ok())
         else
         {
           ir_stamp = true;
-          not_trigger = clock();
+          not_trigger = ros::Time::now().toSec();
           if (stamp == true)
           {
-            stop.data=true;
+            //stop.data=true;
             new_vel.linear.x = 0;
             new_vel.angular.z= 0;
             stamp = false;

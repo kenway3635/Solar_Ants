@@ -5,8 +5,11 @@
 <include file="$(find imu_launch)/launch/imu_msg.launch" >
    </include>
 <node pkg="rover_control" type="rover_control" name="rover_control" output = "screen"  >
+   <param name="time_to_stop" value="0.75"/>
+   <param name="recovery_vel" value="0.1"/> 
 <remap from = "/odom" to = "/odometry/filtered"/>
-    </node>
+</node>
+
 <node pkg="rover_control" type="motor_control" name="motor_control"   >
     </node>
 
