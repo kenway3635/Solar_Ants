@@ -11,6 +11,7 @@ from sensor_msgs.msg import Image
 from collections import namedtuple 
 import argparse , time  
 import threading 
+import math
 # ---------- ROS Image subscriber ------------
 class ROS_image(): 
     def __init__(self): 
@@ -111,14 +112,14 @@ class Robot():
         self.velocity.angular.z = z * self.enhance_factor * reverse
         self.vehPub.publish(self.velocity)
         
-    def switch_callback(self,msg): self.visual_sw = not self.visual_sw 
+    def switch_callback(self,msg): self.visual_sw = msg.data 
     def front_callback(self,msg): self.State = self.State._replace(Fall=msg.data) 
     def pose_callback(self,msg): self.IMU = self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
         
         
 
     def Move(self): 
-
+        print("------",self.State.Angle) 
         if not self.State.Fall and not self.State.Line :  
             self.newVelocity(0.3,0)
         elif self.State.Fall : 
@@ -146,21 +147,22 @@ class Robot():
         # stage1 : turn 90 
         imu_temp = self.IMU.theta 
         while self.visual_sw: 
-            self.newVelocity(0,0.5,reverse) 
-            if 285 >= abs(self.IMU.theta - imu_temp ) >= 75 : break 
+            self.newVelocity(0,0.9,reverse) 
+            if 300 >= abs(self.IMU.theta - imu_temp ) >= 60 : break 
             rospy.loginfo(f"First turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
         # stage2 : go forward 
-        if self.visual_sw: 
-            time.sleep(0.5) 
-            imu_temp = self.IMU.y  
+        if self.visual_sw:
+            time.sleep(0.5)
+            imu_temp_x = self.IMU.x
+            imu_temp_y = self.IMU.y  
         while  self.visual_sw: 
             self.newVelocity(0.12,0) 
-            if abs(imu_temp - self.IMU.y) >0.03: break
+            if math.sqrt(abs(imu_temp_y - self.IMU.y)**2+abs(imu_temp_x-self.IMU.x)**2) >0.12: break
         # stage3 : turn 90 
         imu_temp = self.IMU.theta 
         while self.visual_sw: 
-            self.newVelocity(0,0.5,reverse) 
-            if 285 >= abs(self.IMU.theta - imu_temp ) >= 75 : break 
+            self.newVelocity(0,0.9,reverse) 
+            if 300 >= abs(self.IMU.theta - imu_temp ) >= 60 : break 
             rospy.loginfo(f"Second turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
         
         rospy.loginfo(" Utrun complete ! ")

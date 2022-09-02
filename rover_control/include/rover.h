@@ -6,7 +6,9 @@
 #include "nav_msgs/Odometry.h"
 #include <geometry_msgs/Pose2D.h>
 #include <cmath>
+#include "string.h"
 
+using std::string;
 
 ros::Publisher vel_pub;
 ros::Publisher cmd_stop;
