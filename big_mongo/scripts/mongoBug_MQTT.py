@@ -87,6 +87,11 @@ class MongoBug_MQTT(mqtt.Client):
     def _updateLatch(self,msg,arg):
         self.latch[arg.topic] = self.msg_type_parser[arg.msgType](msg)
         
+    def _updateLatch(self.msg,arg): 
+        if self.ROSTOPIC[arg.topic]["subset"] : 
+            self.latch[arg.topic]["sub_set"] = self.msg_type_parser[arg.msgType](msg) 
+        
+    
     def mqttPublish(self,*args): 
         
         for key,item in self.latch.items(): 
