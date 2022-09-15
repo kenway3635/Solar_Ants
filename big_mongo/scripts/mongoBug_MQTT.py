@@ -56,11 +56,19 @@ class MongoBug_MQTT(mqtt.Client):
         self.connect(self.IP,self.MQTTport,80)
         #self.connect("localhost",1883,60)
         rospy.loginfo("mqtt connection success")
+        
+        ## Area : Only for Node-Red  ###############
+        
         rospy.Subscriber("/front_left_ir",Bool,self.irPub,callback_args=("/front_left_ir"))
         rospy.Subscriber("/back_right_ir",Bool,self.irPub,callback_args=("/back_right_ir"))
         rospy.Subscriber("/back_left_ir",Bool,self.irPub,callback_args=("/back_left_ir"))
         rospy.Subscriber("/front_right_ir",Bool,self.irPub,callback_args=("/front_right_ir"))
         rospy.Subscriber("/line",Bool,self.linePub)
+        
+        
+        ############################################
+        
+        
         for topic in self.ROSTOPIC : 
             rospy.loginfo(f"Subscribe ROS topic : {topic}")
             
@@ -87,10 +95,7 @@ class MongoBug_MQTT(mqtt.Client):
     def _updateLatch(self,msg,arg):
         self.latch[arg.topic] = self.msg_type_parser[arg.msgType](msg)
         
-    def _updateLatch(self.msg,arg): 
-        if self.ROSTOPIC[arg.topic]["subset"] : 
-            self.latch[arg.topic]["sub_set"] = self.msg_type_parser[arg.msgType](msg) 
-        
+
     
     def mqttPublish(self,*args): 
         

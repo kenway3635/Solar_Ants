@@ -41,6 +41,7 @@ class MongoServer(mqtt.Client):
         print(f"connection Database {self.DataBaseName} , {self.IP},{self.username},{self.pwd}")
         #self.Database = MongoClient("192.168.0.82",27017,username=self.username,password=self.pwd)
         self.Database_handler = {}  # create the connection to every collection 
+        
         self.collection_reference = {}  # use to  find corresponding collection by mqtt topic
         for collection in self.collection_list : 
             self.Database_handler[collection] = self.Database[self.DataBaseName][collection]
