@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 		static tf::TransformBroadcaster imu;
 	   	tf::Transform transform;
 		tf::Quaternion q;
-		//ros::Rate loop_rate(20);
+		ros::Rate loop_rate(20);
 		//while(ros::ok()) {
 		/*
 		transform.setOrigin(tf::Vector3(0.0, 0.0, 0.1));

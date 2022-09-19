@@ -36,7 +36,7 @@ joy_control::joy_control():
 
   mode_pub = nh_.advertise<std_msgs::Int32>("/Mode", 1,true);
   vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
-  visual_sw_pub = nh_.advertise<std_msgs::Bool>("/visualSW",1);
+  //visual_sw_pub = nh_.advertise<std_msgs::Bool>("/visualSW",1);
 
 
   elevator_arrived_pub = nh_.advertise<std_msgs::Int32>("/next_goal", 1,true);
@@ -85,14 +85,15 @@ void joy_control::joyCallback(const sensor_msgs::Joy::ConstPtr& joy)
     }
     brush_pub.publish(brush);
   }
-
+/*
   // 0729: visual_sw switch 
   if (abs(joy->axes[6])==1){ 
       if (joy->axes[6]>0)  { visual_sw.data = true ;} 
       else if (joy->axes[6]<0) {visual_sw.data = false; }
       visual_sw_pub.publish(visual_sw);
 
-  } 
+  }
+  */ 
 
   if (joy->buttons[1])
   {

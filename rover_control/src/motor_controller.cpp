@@ -32,7 +32,7 @@ vector<int> motor_vel(2);
  linear_vel=msg->linear.x;
  angular_vel=msg->angular.z;
 }
-
+/*
 void odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
 
@@ -47,6 +47,7 @@ void odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
  imu_y=msg->linear_acceleration.y;
  
 }
+*/
 
 
 int main(int argc, char **argv)
@@ -54,14 +55,14 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "controller");
   ros::NodeHandle n;
   motor_vel_pub =  n.advertise<std_msgs::Int32MultiArray>("cmd_motor", 1);
-  slip_pub =  n.advertise<std_msgs::Float64>("slip", 10);
-  tilt_pub =  n.advertise<std_msgs::Float64>("tilt", 10);
+  //slip_pub =  n.advertise<std_msgs::Float64>("slip", 10);
+  //tilt_pub =  n.advertise<std_msgs::Float64>("tilt", 10);
 
   vel_sub = n.subscribe("cmd_vel", 1, velCallback);
-imu_sub = n.subscribe("imu/data", 10, imuCallback);
-odom_sub = n.subscribe("odom", 1, odomCallback);
+//imu_sub = n.subscribe("imu/data", 10, imuCallback);
+//odom_sub = n.subscribe("odom", 1, odomCallback);
 ros::Time::init();
-ros::Rate r(20);
+ros::Rate r(30);
 while (ros::ok())
   {
     slip_ratio=abs(odom_omega-imu_omega);
@@ -88,7 +89,7 @@ while (ros::ok())
       }
     }
    std_msgs::Int32MultiArray cmd;
-   std_msgs::Float64 slip_value,tilt_value;
+   //std_msgs::Float64 slip_value,tilt_value;
 
    motor_vel[1]= (VR * Gear_Ratio * rad2rev / (sec2min * Wheel_Radius));
    motor_vel[0]= (VL * Gear_Ratio * rad2rev / (sec2min * Wheel_Radius));
@@ -99,16 +100,18 @@ while (ros::ok())
   //  else slip_ratio = imu_omega/odom_omega;
    
 
-  
+  /*
   slip_value.data=slip_ratio;
   tilt_value.data=tilt_angle;
   slip_pub.publish(slip_value);
   tilt_pub.publish(tilt_value);
+  */
   motor_vel_pub.publish(cmd);
   //   ROS_INFO("tilt_angle = %d",tilt_angle);
   // ROS_INFO("slip_ratio = %f",slip_ratio);
-   ROS_INFO("odom z axis=%f",odom_omega);
-   ROS_INFO("imu_z axis = %f",imu_omega);
+
+  // ROS_INFO("odom z axis=%f",odom_omega);
+  // ROS_INFO("imu_z axis = %f",imu_omega);
   ros::spinOnce();
   r.sleep();
   

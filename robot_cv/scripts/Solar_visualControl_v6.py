@@ -102,7 +102,7 @@ class Robot():
         self.vehPub = rospy.Publisher("visual_cmd_vel",Twist,queue_size=1)
         self.linePub = rospy.Publisher("/line",Bool,queue_size=1)
         self.switchSub = rospy.Subscriber("/visualSW",Bool,self.switch_callback) 
-        self.poseSub = rospy.Subscriber("/pose2d",Pose2D,self.pose_callback) 
+        self.poseSub = rospy.Subscriber("/pose2d",Pose2D,self.pose_callback,queue_size=1) 
         self.FallSub = rospy.Subscriber("/front_detect",Bool,self.front_callback)
         rospy.loginfo("Register Done ! ")
 
@@ -146,25 +146,28 @@ class Robot():
         
         # stage1 : turn 90 
         imu_temp = self.IMU.theta 
+        self.newVelocity(0,0.9,reverse)
         while self.visual_sw: 
-            self.newVelocity(0,0.9,reverse) 
-            if 300 >= abs(self.IMU.theta - imu_temp ) >= 60 : break 
+            #self.newVelocity(0,0.9,reverse) 
+            if 280 >= abs(self.IMU.theta - imu_temp ) >= 80 : break 
             rospy.loginfo(f"First turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
-        # stage2 : go forward 
+        # stage2 : go forward
+        #self.newVelocity(0,0)
         if self.visual_sw:
-            time.sleep(0.5)
+           # time.sleep(2.5)
             imu_temp_x = self.IMU.x
             imu_temp_y = self.IMU.y  
         while  self.visual_sw: 
             self.newVelocity(0.12,0) 
             if math.sqrt(abs(imu_temp_y - self.IMU.y)**2+abs(imu_temp_x-self.IMU.x)**2) >0.12: break
-        # stage3 : turn 90 
+        #self.newVelocity(0,0)
+      # stage3 : turn 90 
         imu_temp = self.IMU.theta 
         while self.visual_sw: 
             self.newVelocity(0,0.9,reverse) 
-            if 300 >= abs(self.IMU.theta - imu_temp ) >= 60 : break 
+            if 280 >= abs(self.IMU.theta - imu_temp ) >= 80 : break 
             rospy.loginfo(f"Second turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
-        
+        self.newVelocity(0,0)
         rospy.loginfo(" Utrun complete ! ")
         self.flag = self.flag+1 if self.visual_sw else 0 
         self.inUturn = False 

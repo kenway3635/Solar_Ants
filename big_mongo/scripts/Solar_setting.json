@@ -15,7 +15,7 @@
     { "Topic_name":"/voltage" , "msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"voltage"  }, 
     { "Topic_name":"/temperature" , "msg_type":"std","data_class": "Float32MultiArray", "quene_size": 5 , "collection":"temperature"  },
     { "Topic_name":"/temp/imx" ,"msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"temperature"  },
-    { "Topic_name":"/temp/electroBox" , "msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"temperature"  },
+    { "Topic_name":"/temp/electrobox" , "msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"temperature"  },
     { "Topic_name":"/temp/brush"  ,"msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"temperature"  },
     { "Topic_name":"/temp/battery" ,"msg_type":"std","data_class": "Float32", "quene_size": 5 , "collection":"temperature"  }
 
