@@ -290,7 +290,7 @@ void willy_motor::run()
 		send_cmd(0x00 ,0x0E3A,1500 ); //speed gain
 		send_cmd(0x00 ,0x0E3E,150 ); //torque gain
 		send_cmd(0x00, 0x0704, 200);  //torque limiting value(%)
-		send_cmd(0x00, 0x104A, 900);
+		send_cmd(0x00, 0x104A, 3150); //upper speed limit
 		send_cmd(ID_1, 0x018C, 1);
 		ROS_INFO("Configuring...");
 		usleep(2000000);
@@ -359,7 +359,7 @@ int willy_motor::Serial_set(int Baudrate, std::string Port, int Parity)
 
 int willy_motor::calculate_cmd(int v)
 {
-	int upper_lim=3000,lower_lim=80;
+	int upper_lim=3150,lower_lim=80;
 	if (stop_l)//emergency stop
 	{
 		if (last_dir == 1)

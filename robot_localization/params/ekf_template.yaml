@@ -81,14 +81,14 @@ odom0: odom
 # has no pose information, so the first six values would be meaningless in that case. Each vector defaults to all false
 # if unspecified, effectively making this parameter required for each sensor.
 odom0_config: [true,  true,  false,
-               true, true, true,
+               false, false, true,
                true, false, false,
                false, false, true,
                false, false, false]
 
 # If you have high-frequency data or are running with a low frequency parameter value, then you may want to increase
 # the size of the subscription queue so that more measurements are fused.
-odom0_queue_size: 10
+odom0_queue_size: 2
 
 # [ADVANCED] Large messages in ROS can exhibit strange behavior when they arrive at a high frequency. This is a result
 # of Nagle's algorithm. This option tells the ROS subscriber to use the tcpNoDelay option, which disables Nagle's
@@ -162,11 +162,11 @@ imu0_config: [false, false, false,
               true,  true,  true,
               false, false, false,
               true,  true,  true,
-              true ,true,  true]
+              false ,false,  false]
 imu0_nodelay: true
 imu0_differential: false
 imu0_relative: true
-imu0_queue_size: 10
+imu0_queue_size: 2
 #imu0_pose_rejection_threshold: 0.8                 # Note the difference in parameter names
 #imu0_twist_rejection_threshold: 0.8                #
 #imu0_linear_acceleration_rejection_threshold: 0.8  #
@@ -219,36 +219,36 @@ control_config: [true, false, false, false, false, true]
 # to be larger, which will cause the filter to trust the incoming measurement more during correction. The values are
 # ordered as x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az. Defaults to the matrix below if
 # unspecified.
-process_noise_covariance: [0.05, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                                                          0,    0.05, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                                                          0,    0,    0.06, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                                                          0,    0,    0,    0.03, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                                                          0,    0,    0,    0,    0.03, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                                                          0,    0,    0,    0,    0,    0.06, 0,     0,     0,    0,    0,    0,    0,    0,    0,
-                                                          0,    0,    0,    0,    0,    0,    0.025, 0,     0,    0,    0,    0,    0,    0,    0,
-                                                          0,    0,    0,    0,    0,    0,    0,     0.025, 0,    0,    0,    0,    0,    0,    0,
-                                                          0,    0,    0,    0,    0,    0,    0,     0,     0.04, 0,    0,    0,    0,    0,    0,
-                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0.01, 0,    0,    0,    0,    0,
-                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.01, 0,    0,    0,    0,
-                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.02, 0,    0,    0,
-                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.01, 0,    0,
-                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.01, 0,
-                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.015]
-# process_noise_covariance: [500, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-#                                                           0,    500, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-#                                                           0,    0,    600, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-#                                                           0,    0,    0,    300, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-#                                                           0,    0,    0,    0,    300, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-#                                                           0,    0,    0,    0,    0,    600, 0,     0,     0,    0,    0,    0,    0,    0,    0,
-#                                                           0,    0,    0,    0,    0,    0,    250, 0,     0,    0,    0,    0,    0,    0,    0,
-#                                                           0,    0,    0,    0,    0,    0,    0,     250, 0,    0,    0,    0,    0,    0,    0,
-#                                                           0,    0,    0,    0,    0,    0,    0,     0,     400, 0,    0,    0,    0,    0,    0,
-#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    100, 0,    0,    0,    0,    0,
-#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    100, 0,    0,    0,    0,
-#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    200, 0,    0,    0,
-#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    100, 0,    0,
-#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    100, 0,
-#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    150]
+# process_noise_covariance: [0.05, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+#                                                           0,    0.05, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+#                                                           0,    0,    0.06, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+#                                                           0,    0,    0,    0.03, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+#                                                           0,    0,    0,    0,    0.03, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+#                                                           0,    0,    0,    0,    0,    0.06, 0,     0,     0,    0,    0,    0,    0,    0,    0,
+#                                                           0,    0,    0,    0,    0,    0,    0.025, 0,     0,    0,    0,    0,    0,    0,    0,
+#                                                           0,    0,    0,    0,    0,    0,    0,     0.025, 0,    0,    0,    0,    0,    0,    0,
+#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0.04, 0,    0,    0,    0,    0,    0,
+#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0.01, 0,    0,    0,    0,    0,
+#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.01, 0,    0,    0,    0,
+#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.02, 0,    0,    0,
+#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.01, 0,    0,
+#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.01, 0,
+#                                                           0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.015]
+process_noise_covariance: [0.2, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                                                          0,    0.2, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                                                          0,    0,    0.24, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                                                          0,    0,    0,    0.12, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                                                          0,    0,    0,    0,    0.12, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                                                          0,    0,    0,    0,    0,    0.24, 0,     0,     0,    0,    0,    0,    0,    0,    0,
+                                                          0,    0,    0,    0,    0,    0,    0.1,   0,     0,    0,    0,    0,    0,    0,    0,
+                                                          0,    0,    0,    0,    0,    0,    0,     0.1,   0,    0,    0,    0,    0,    0,    0,
+                                                          0,    0,    0,    0,    0,    0,    0,     0,     0.16, 0,    0,    0,    0,    0,    0,
+                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0.04, 0,    0,    0,    0,    0,
+                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0.04, 0,    0,    0,    0,
+                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0.08, 0,    0,    0,
+                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0.04, 0,    0,
+                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.04, 0,
+                                                          0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.04]
 
 # [ADVANCED] This represents the initial value for the state estimate error covariance matrix. Setting a diagonal
 # value (variance) to a large value will result in rapid convergence for initial measurements of the variable in

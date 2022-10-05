@@ -10,7 +10,7 @@ from geometry_msgs.msg import Twist
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import Joy
-from model import CNN_ODOM_Model, Visual_IMU_Model
+from model import CNN_ODOM_Model, Visual_IMU_Model, Model_0718
 from to_npy import DataCapture
 
 import torch 
@@ -25,8 +25,8 @@ if __name__ == '__main__':
   cmd=Twist()
   time = 0 #time stamp
   device = 'cuda' if torch.cuda.is_available() else 'cpu'
-  model = Visual_IMU_Model(input_dim=172810).to(device)
-  save_path = './trained_model/Visual_IMU_0706.ckpt'
+  model = Model_0718(input_dim=172810).to(device)
+  save_path = './models/0718.ckpt'
   model.load_state_dict(torch.load(save_path,map_location='cpu'))
   model.eval()
   batch_size = 1

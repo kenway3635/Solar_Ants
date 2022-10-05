@@ -41,13 +41,13 @@ int main(int argc, char **argv)
 	//willy_v2::Float_Header VL_msg, VR_msg, Left_rad_msg, Right_rad_msg;
 	float Curr_VL,Curr_VR,Last_VL,Last_VR;
 
-	ros::Publisher odom_pub= n.advertise<nav_msgs::Odometry>("odom", 20);
+	ros::Publisher odom_pub= n.advertise<nav_msgs::Odometry>("odom", 5);
 	//ros::Publisher WL_pub = n.advertise<willy_v2::Float_Header>("Left_Vel_Response", 10);
 	//ros::Publisher WR_pub = n.advertise<willy_v2::Float_Header>("Right_Vel_Response", 10);
 	//ros::Publisher Left_rad_pub = n.advertise<willy_v2::Float_Header>("Left_Rad_Response", 10);
 	//ros::Publisher Right_rad_pub = n.advertise<willy_v2::Float_Header>("Right_Rad_Response", 10);
-	ros::Subscriber motor_vl_sub = n.subscribe("/motor_vl", 5, motor_vl_callback);
-	ros::Subscriber motor_vr_sub = n.subscribe("/motor_vr", 5, motor_vr_callback);
+	ros::Subscriber motor_vl_sub = n.subscribe("/motor_vl", 1, motor_vl_callback);
+	ros::Subscriber motor_vr_sub = n.subscribe("/motor_vr", 1, motor_vr_callback);
 	
 	while(ros::ok()) 
 	{
@@ -58,8 +58,8 @@ int main(int argc, char **argv)
 
 		if (count > 1){
 			dt = (Curr_T - Last_T).toSec();
-			Curr_VL = (motor_vl / gear_R)*Wheel_R/rad2rev/60;
-			Curr_VR = (motor_vr / gear_R)*Wheel_R/rad2rev/60;
+			Curr_VL = (motor_vl / gear_R)*Wheel_R/(rad2rev*60);
+			Curr_VR = (motor_vr / gear_R)*Wheel_R/(rad2rev*60);
 
 			//printf("dt is: %lf\n", dt);
 			if (Curr_VL > 0 && Last_VL > 0 ){ 
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
 
 
 			v_m = (vl + vr)/2;
-			yaw_rate = (vr - vl)/Wheel_B;
+			yaw_rate = (vr - vl)/(2*Wheel_B);
 			d_x = v_m*cos(phi)*dt;
 			d_y = v_m*sin(phi)*dt;
 			d_phi = yaw_rate*dt;

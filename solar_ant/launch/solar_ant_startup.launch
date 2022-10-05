@@ -1,25 +1,24 @@
 <launch>
 
-        <!-- <arg name = "Driver_Port" default = "/dev/ttyUSB0" /> -->
-        <!-- <arg name = "Driver_Baud" default = "115200" />
-        <arg name = "bluetooth" default = "/dev/Bluetooth" />
-        <arg name = "control_hz" default = "20" />
-        <arg name = "Hokuyo_IP"   default = "192.168.44.10" /> -->
-
-
-        <!-- <node pkg="willy_v2" type="willy_v2_base" name="willy_base" output="screen">
-                <param name="Baudrate" value="$(arg Driver_Baud)" />
-                <param name="Port" value="$(arg Driver_Port)" />
+        <arg name = "Driver_Baud" default = "115200" />
+	<arg name = "bluetooth" default = "/dev/Bluetooth" />
+	<arg name = "control_hz" default = "20" />
+	
+	<node pkg="willy_v2" type="willy_motor_left" name="willy_motor_left" >
+		<param name="Baudrate" value="$(arg Driver_Baud)" />
+		<param name="Port" value="/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A95WPAXH-if00-port0" />
         <param name="control_hz" value="$(arg control_hz)" />
-        </node> -->
-<!-- 
-        
-        <node pkg="willy_v2" type="willy_v2_encoder" name="willy_encoder" >
-                <param name="Baudrate" value="$(arg Driver_Baud)" />
-                <param name="Port" value="$(arg Driver_Port)" /> -->
-                <!-- <remap from = "/odom" to = "/odom_data"/> -->
-        <!-- </node> -->
-        <include file = "$(find willy_v2)/launch/willy_motor.launch" />
+	</node>
+
+	<node pkg="willy_v2" type="willy_motor_right" name="willy_motor_right" >
+		<param name="Baudrate" value="$(arg Driver_Baud)" />
+		<param name="Port" value="/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AQ00DZFN-if00-port0" />
+        <param name="control_hz" value="$(arg control_hz)" />
+	</node>
+		<node pkg="willy_v2" type="willy_v2_encoder" name="willy_encoder" respawn="true" >
+		<param name="Baudrate" value="$(arg Driver_Baud)" />
+		<!-- <remap from = "/odom" to = "/odom_data"/> -->
+	</node>
         <!-- <include file = "$(find communication_develop)/launch/solar_ant1.launch" /> -->
         <!-- <node pkg="willy_v2" type="willy_v2_fault_detection" name="willy_v2_fault_detection"/> -->
 
@@ -31,7 +30,7 @@
                 <param name="angle_max" value="2"/>
         </node> -->
 
-  <include file = "$(find rover_control)/launch/robot_control.launch" output="screen"/> 
+  <include file = "$(find rover_control)/launch/robot_control.launch" /> 
 
         <!--node pkg="rqt_plot" name="plot_right_vel" type="rqt_plot" args=" /right_vel /left_vel"/               output="screen"     -->
 

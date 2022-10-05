@@ -4,13 +4,23 @@
   </include>
 <include file="$(find imu_launch)/launch/imu_msg.launch" >
    </include>
-<node pkg="rover_control" type="rover_control" name="rover_control"  >
+<node pkg="rover_control" type="rover_control" name="rover_control"  output = "screen">
    <param name="time_to_stop" value="0.3"/>
    <param name="recovery_vel" value="0.1"/> 
-<remap from = "/odom" to = "/odometry/filtered"/>
+   <param name="kp" value = "0.5"/>
+   <param name="ki" value = "0.1"/>
+   <param name="kd" value = "0.01"/>
+
+   <param name="anti_skid" value = "true"/>
+   <param name="emergency_brake_ratio" value = "0.1"/>
+   <param name="enhance_factor" value = "1"/>
+   
+
+   <!-- <remap from = "/odom" to = "/odometry/filtered"/> -->
 </node>
 
 <node pkg="rover_control" type="motor_control" name="motor_control"   >
+
     </node>
 
     

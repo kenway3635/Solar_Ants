@@ -12,8 +12,8 @@
 #include <std_msgs/Int32.h>
 #include <willy_v2/Float_Header.h>
 
-#define Wheel_R 0.0823    
-#define Wheel_B 0.4 //0.31922
+#define Wheel_R 0.075    
+#define Wheel_B 0.255 //0.31922
 #define gear_R 50
 #define PI 3.14159
 #define rad2rev 0.1591549

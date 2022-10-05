@@ -101,7 +101,8 @@ class Robot():
     def Register(self): 
         self.vehPub = rospy.Publisher("visual_cmd_vel",Twist,queue_size=1)
         self.linePub = rospy.Publisher("/line",Bool,queue_size=1)
-        self.switchSub = rospy.Subscriber("/visualSW",Bool,self.switch_callback) 
+        self.BrushPub = rospy.Publisher("brush_switch",Bool,queue_size=1) 
+        self.switchSub = rospy.Subscriber("/visualSW",Bool,self.switch_callback)
         self.poseSub = rospy.Subscriber("/pose2d",Pose2D,self.pose_callback,queue_size=1) 
         self.FallSub = rospy.Subscriber("/front_detect",Bool,self.front_callback)
         rospy.loginfo("Register Done ! ")
@@ -114,21 +115,24 @@ class Robot():
         
     def switch_callback(self,msg): self.visual_sw = msg.data 
     def front_callback(self,msg): self.State = self.State._replace(Fall=msg.data) 
-    def pose_callback(self,msg): self.IMU = self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
+    def pose_callback(self,msg): self.IMU = self.IMU._replace(
+        x = msg.x,
+        y=msg.y,
+        theta=msg.theta if msg.theta>-90 else msg.theta+360) 
         
         
 
     def Move(self): 
         print("------",self.State.Angle) 
         if not self.State.Fall and not self.State.Line :  
-            self.newVelocity(0.3,0)
+            self.newVelocity(0.2,0)
         elif self.State.Fall : 
             rospy.loginfo("Stop ! ")
             Uturn = threading.Thread(target=self.Uturn) 
             Uturn.start() 
         elif not self.State.Fall and self.State.Line: 
             if abs(self.State.Angle) <= 5 : 
-                self.newVelocity(0.3,0)
+                self.newVelocity(0.2,0)
             else:
                 if self.State.Angle > 0 :  
                     print("left turn !")   
@@ -140,17 +144,26 @@ class Robot():
     def Uturn(self): 
         rospy.loginfo("#########  Uturn !!!! #########")
         self.inUturn = True 
+        self.BrushPub.publish(True) 
         reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
-        
+
+        kp = 0.008
+        target_angle = 80
         if not self.IMU.x : raise BaseException("IMU Bug")
         
         # stage1 : turn 90 
         imu_temp = self.IMU.theta 
-        self.newVelocity(0,0.9,reverse)
+        #self.newVelocity(0,0.9,reverse)
         while self.visual_sw: 
-            #self.newVelocity(0,0.9,reverse) 
-            if 280 >= abs(self.IMU.theta - imu_temp ) >= 80 : break 
-            rospy.loginfo(f"First turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
+            # if imu_temp < -90:
+            #     imu_temp += 360
+            # if self.IMU.theta < -90:
+            #     self.IMU.theta += 360
+            error = abs(target_angle-abs(self.IMU.theta - imu_temp ))
+            self.newVelocity(0,max(error*kp, 0.1),reverse) 
+            if 360-target_angle >= abs(self.IMU.theta - imu_temp ) >= target_angle : break 
+            rospy.loginfo(error)
+            #rospy.loginfo(f"First turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
         # stage2 : go forward
         #self.newVelocity(0,0)
         if self.visual_sw:
@@ -158,20 +171,26 @@ class Robot():
             imu_temp_x = self.IMU.x
             imu_temp_y = self.IMU.y  
         while  self.visual_sw: 
-            self.newVelocity(0.12,0) 
+            self.newVelocity(0.2,0) 
             if math.sqrt(abs(imu_temp_y - self.IMU.y)**2+abs(imu_temp_x-self.IMU.x)**2) >0.12: break
         #self.newVelocity(0,0)
       # stage3 : turn 90 
         imu_temp = self.IMU.theta 
         while self.visual_sw: 
-            self.newVelocity(0,0.9,reverse) 
-            if 280 >= abs(self.IMU.theta - imu_temp ) >= 80 : break 
-            rospy.loginfo(f"Second turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
-        self.newVelocity(0,0)
+            # if imu_temp < -90:
+            #     imu_temp += 360
+            # if self.IMU.theta < -90:
+            #     self.IMU.theta += 360
+            error =abs(target_angle- abs(self.IMU.theta - imu_temp ))
+            self.newVelocity(0,max(error*kp, 0.1),reverse) 
+            if 360-target_angle >= abs(self.IMU.theta - imu_temp ) >= target_angle : break 
+            rospy.loginfo(error)
+            #rospy.loginfo(f"First turn angle displacement: { abs(self.IMU.theta - imu_temp )}")
+        #self.newVelocity(0,0)
         rospy.loginfo(" Utrun complete ! ")
         self.flag = self.flag+1 if self.visual_sw else 0 
         self.inUturn = False 
-        
+        self.BrushPub.publish(True) 
 
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser() 

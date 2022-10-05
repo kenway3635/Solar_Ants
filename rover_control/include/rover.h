@@ -5,6 +5,7 @@
 #include <std_msgs/Int32.h>
 #include "nav_msgs/Odometry.h"
 #include <geometry_msgs/Pose2D.h>
+#include <sensor_msgs/Imu.h>
 #include <cmath>
 #include "string.h"
 
@@ -31,6 +32,7 @@ std_msgs::Bool front_detect;
 std_msgs::Bool visualSW_data;
 
 float Vel_x,Ang_z,cam_vel_x,cam_ang_z;
+float linear_vel_fb, angular_vel_fb;
 bool FL,FR,BL,BR,cliff,button;
 float x,y,l,theta,loop=0;
 int mode=50;
