@@ -208,11 +208,11 @@ if __name__ == "__main__":
             SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
             if SolarAnt.visual_sw:
-                rospy.loginfo("########")
                 if SolarAnt.inUturn:
                     SolarAnt.Uturn()
                 else:
                     SolarAnt.Move() 
+            else : SolarAnt.inUturn = False
             rospy.loginfo(SolarAnt.State)
             
         cv2.imshow("Frame",RosImage.raw_image)
