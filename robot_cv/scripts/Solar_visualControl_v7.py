@@ -20,12 +20,11 @@ class ROS_image():
     def __init__(self): 
     
         self.bridge = CvBridge() 
-        self.height ,self.width = 180 ,320
-        self.margin = int(0.1*self.width)
+        #self.height ,self.width = 180 ,320
+        #self.margin = int(0.1*self.width)
         self.kernel_dilate = np.ones((3,3),np.uint8)
         self.kernel_erode = np.ones( (3,3),np.uint8 )
-        self.sobel_kernel = np.array(
-        [[-1,2,-1] , [-1,2,-1] ,[-1,2,-1] ] ,dtype=np.int8 ) 
+        #self.sobel_kernel = np.array([[-1,2,-1] , [-1,2,-1] ,[-1,2,-1] ] ,dtype=np.int8 ) 
             
         self.raw_image = np.zeros((180,320,3) , dtype=np.uint8)
         self.use_image = None
@@ -45,8 +44,8 @@ class ROS_image():
         self.use_image = cv2.dilate(self.use_image,self.kernel_dilate,iterations=2)
         self.use_image = cv2.erode(self.use_image , self.kernel_erode , iterations=1)
         #self.use_image = cv2.morphologyEx(self.use_image,cv2.MORPH_CLOSE,self.kernel,iterations=1 )
-        #TODO 可能需要切掉部份區域
-    def line_detect(self,minlineLength = 60 , maxlineGap = 50): 
+        
+    def line_detect(self,minlineLength = 60 , maxlineGap = 50, inUturn = False): 
         #self.use_image = cv2.bitwise_not(self.use_image)
         cv2.imshow("test",self.use_image)
         linePoint = cv2.HoughLinesP(self.use_image,1,np.pi/180 , 
@@ -74,26 +73,26 @@ class ROS_image():
                         accumulation_angle +=cal_angle
  
                         
-
-            angle = 0 if not count else accumulation_angle/count    
-            detectable = True if angle else False
-
-            aq.enqueue(angle) 
-            # if count: 
-        
-            #     detectable = True 
-            # else:
-            #     angle = 0
-            #     detectable = False
+            if not inUturn:
+                if count: 
+                    angle = accumulation_angle/count 
+                    detectable = True 
+                else:
+                    angle = 0 
+                    detectable = False
+            else:
+                angle = 0 if not count else accumulation_angle/count    
+                detectable = True if angle else False
+                
+                aq.enqueue(angle)
         
         except: 
             angle = 0
-            detectable = False 
-            #aq.enqueue(angle)
+            detectable = False
         
         finally : 
         
-            acc_angle = aq.get() 
+            acc_angle = aq.get() if inUturn else angle
         
 
         #return detectable , angle 
@@ -109,9 +108,11 @@ class anglequeue :
             #input()
         if len(self.q) > 3: self.q.pop(0) 
     def get(self) : 
-        c = 0
-        for i in self.q:c+= abs(i)
-        return c/3
+        angle = weight = 0
+        for i in self.q:
+            weight+=1
+            angle+= abs(i) * weight
+        return angle/6
 
 #----------- other Subscriber callback function 
 
@@ -123,7 +124,7 @@ class Robot():
         self.UturnState = 1
         self.IR_left,self.IR_Right = None ,None 
         self.enhance_factor = enhance_factor
-        self.IMU = namedtuple("IMU",["x","y","theta"])(None,None,None)
+        #self.IMU = namedtuple("IMU",["x","y","theta"])(None,None,None)
         self.State = namedtuple("State",["Fall","Line","Angle"])(False,False,0)
         self.velocity = Twist() 
         self.Register()
@@ -132,7 +133,7 @@ class Robot():
         self.vehPub = rospy.Publisher("visual_cmd_vel",Twist,queue_size=1)
         self.linePub = rospy.Publisher("/line",Bool,queue_size=1)
         self.switchSub = rospy.Subscriber("/visualSW",Bool,self.switch_callback) 
-        self.poseSub = rospy.Subscriber("/pose2d",Pose2D,self.pose_callback,queue_size=1) 
+        #self.poseSub = rospy.Subscriber("/pose2d",Pose2D,self.pose_callback,queue_size=1) 
         self.FallSub = rospy.Subscriber("/front_detect",Bool,self.front_callback)
         rospy.loginfo("Register Done ! ")
 
@@ -144,7 +145,7 @@ class Robot():
         
     def switch_callback(self,msg): self.visual_sw = msg.data 
     def front_callback(self,msg): self.State = self.State._replace(Fall=msg.data) 
-    def pose_callback(self,msg): self.IMU = self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
+    #def pose_callback(self,msg): self.IMU = self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
         
         
 
@@ -170,12 +171,12 @@ class Robot():
     def Uturn(self):
         reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
         self.newVelocity(0,0.9,reverse)
-        rospy.loginfo("Uturn in %d state" %self.UturnState)
+        rospy.loginfo(f"Uturn in {self.UturnState} state")
         if self.State.Angle == 0 : return
         print(self.State.Angle)
-        if (self.UturnState == 1 or self.UturnState == 3) and abs(self.State.Angle) > 40:
+        if (self.UturnState == 1 or self.UturnState == 3) and self.State.Angle > 35:
             self.UturnState += 1
-        elif (self.UturnState == 2 or self.UturnState == 4)and abs(self.State.Angle) < 30:
+        elif (self.UturnState == 2 or self.UturnState == 4)and self.State.Angle < 25:
             self.UturnState += 1
         if self.UturnState == 5 and abs(self.State.Angle) < 10:
             self.inUturn = False
@@ -195,7 +196,13 @@ if __name__ == "__main__":
     RosImage =ROS_image() 
     aq = anglequeue()
 
-    RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8) 
+    RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8)
+
+    # Video capture
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (RosImage.height,RosImage.width))
+
+
     while not rospy.is_shutdown(): 
             
         if RosImage.raw_image.any() == True:
@@ -203,10 +210,17 @@ if __name__ == "__main__":
             RosImage.use_image = RosImage.raw_image.copy() 
             
             RosImage.preProcessing() 
-            line_detectable , line_angle  = RosImage.line_detect()
+            line_detectable , line_angle  = RosImage.line_detect(inUturn = SolarAnt.inUturn)
             SolarAnt.State = SolarAnt.State._replace(Line=line_detectable,Angle=line_angle)
             SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
+
+            # Video capture
+            videoFrame = RosImage.raw_image.copy()
+            out.write(videoFrame)
+            cv2.imshow('videoFrame', videoFrame)
+
+
             if SolarAnt.visual_sw:
                 if SolarAnt.inUturn:
                     SolarAnt.Uturn()
@@ -216,8 +230,11 @@ if __name__ == "__main__":
             rospy.loginfo(SolarAnt.State)
             
         cv2.imshow("Frame",RosImage.raw_image)
-        if cv2.waitKey(200) & 0xFF == ord("q"): 
+        if cv2.waitKey(50) & 0xFF == ord("q"): 
             break 
     cv2.destroyAllWindows() 
     
 cv2.destroyAllWindows() 
+
+# Video capture
+out.release()
