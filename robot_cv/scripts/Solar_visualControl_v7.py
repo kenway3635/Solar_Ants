@@ -20,7 +20,7 @@ class ROS_image():
     def __init__(self): 
     
         self.bridge = CvBridge() 
-        #self.height ,self.width = 180 ,320
+        self.height ,self.width = 180 ,320
         #self.margin = int(0.1*self.width)
         self.kernel_dilate = np.ones((3,3),np.uint8)
         self.kernel_erode = np.ones( (3,3),np.uint8 )
@@ -37,12 +37,12 @@ class ROS_image():
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
     
-        self.use_image =  cv2.cvtColor(self.use_image,cv2.COLOR_BGR2GRAY)  
+        self.use_image =  cv2.cvtColor(self.use_image,cv2.COLOR_BGR2HSV)  
         self.use_image = cv2.GaussianBlur(self.use_image,(3,3),sigmaX=1) 
         #self.use_image = cv2.filter2D(self.use_image,-1,self.sobel_kernel,delta=0)
         self.use_image = cv2.Canny(self.use_image,150,225,apertureSize = 3 ,L2gradient= True) 
         self.use_image = cv2.dilate(self.use_image,self.kernel_dilate,iterations=2)
-        self.use_image = cv2.erode(self.use_image , self.kernel_erode , iterations=1)
+        self.use_image = cv2.erode(self.use_image , self.kernel_erode , iterations=3)
         #self.use_image = cv2.morphologyEx(self.use_image,cv2.MORPH_CLOSE,self.kernel,iterations=1 )
         
     def line_detect(self,minlineLength = 60 , maxlineGap = 50, inUturn = False): 
@@ -209,6 +209,8 @@ if __name__ == "__main__":
             
             RosImage.use_image = RosImage.raw_image.copy() 
             
+            videoFrame = RosImage.raw_image.copy()
+
             RosImage.preProcessing() 
             line_detectable , line_angle  = RosImage.line_detect(inUturn = SolarAnt.inUturn)
             SolarAnt.State = SolarAnt.State._replace(Line=line_detectable,Angle=line_angle)
@@ -216,7 +218,7 @@ if __name__ == "__main__":
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
 
             # Video capture
-            videoFrame = RosImage.raw_image.copy()
+            
             out.write(videoFrame)
             cv2.imshow('videoFrame', videoFrame)
 
