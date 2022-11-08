@@ -1,7 +1,6 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
-import sys 
-print(sys.path) 
+
 
 import cv2 , datetime, rospy ,time,math   
 import numpy as np 
@@ -23,7 +22,7 @@ class ROS_image():
         self.height ,self.width = 180 ,320
         #self.margin = int(0.1*self.width)
         self.kernel_dilate = np.ones((3,3),np.uint8)
-        self.kernel_erode = np.ones( (3,3),np.uint8 )
+        self.kernel_erode = np.ones( (3,3),np.uint8)
         #self.sobel_kernel = np.array([[-1,2,-1] , [-1,2,-1] ,[-1,2,-1] ] ,dtype=np.int8 ) 
             
         self.raw_image = np.zeros((180,320,3) , dtype=np.uint8)
@@ -37,7 +36,7 @@ class ROS_image():
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
     
-        self.use_image =  cv2.cvtColor(self.use_image,cv2.COLOR_BGR2HSV)  
+        self.use_image = cv2.cvtColor(self.use_image,cv2.COLOR_BGR2HSV)  
         self.use_image = cv2.GaussianBlur(self.use_image,(3,3),sigmaX=1) 
         #self.use_image = cv2.filter2D(self.use_image,-1,self.sobel_kernel,delta=0)
         self.use_image = cv2.Canny(self.use_image,150,225,apertureSize = 3 ,L2gradient= True) 
@@ -170,9 +169,11 @@ class Robot():
 
     def Uturn(self):
         reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
-        self.newVelocity(0,0.9,reverse)
         rospy.loginfo(f"Uturn in {self.UturnState} state")
-        if self.State.Angle == 0 : return
+        if self.State.Angle == 0 :
+            self.newVelocity(0,0.05,reverse)
+            return
+        self.newVelocity(0,0.3,reverse)
         print(self.State.Angle)
         if (self.UturnState == 1 or self.UturnState == 3) and self.State.Angle > 35:
             self.UturnState += 1
@@ -198,11 +199,6 @@ if __name__ == "__main__":
 
     RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8)
 
-    # Video capture
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (RosImage.height,RosImage.width))
-
-
     while not rospy.is_shutdown(): 
             
         if RosImage.raw_image.any() == True:
@@ -217,12 +213,6 @@ if __name__ == "__main__":
             SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
 
-            # Video capture
-            
-            out.write(videoFrame)
-            cv2.imshow('videoFrame', videoFrame)
-
-
             if SolarAnt.visual_sw:
                 if SolarAnt.inUturn:
                     SolarAnt.Uturn()
@@ -236,7 +226,4 @@ if __name__ == "__main__":
             break 
     cv2.destroyAllWindows() 
     
-cv2.destroyAllWindows() 
-
-# Video capture
-out.release()
+cv2.destroyAllWindows()
