@@ -36,12 +36,15 @@ class ROS_image():
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
     
-        self.use_image = cv2.cvtColor(self.use_image,cv2.COLOR_BGR2HSV)  
+        self.use_image = cv2.cvtColor(self.use_image,cv2.COLOR_BGR2HSV)
+        cv2.imshow("HSV",self.use_image)
+        #self.use_image = cv2.inRange(self.use_image,(0,0,150),(100,100,255))
+        #cv2.imshow("delete",self.use_image)
         self.use_image = cv2.GaussianBlur(self.use_image,(3,3),sigmaX=1) 
         #self.use_image = cv2.filter2D(self.use_image,-1,self.sobel_kernel,delta=0)
         self.use_image = cv2.Canny(self.use_image,150,225,apertureSize = 3 ,L2gradient= True) 
         self.use_image = cv2.dilate(self.use_image,self.kernel_dilate,iterations=2)
-        self.use_image = cv2.erode(self.use_image , self.kernel_erode , iterations=3)
+        self.use_image = cv2.erode(self.use_image , self.kernel_erode , iterations=1)
         #self.use_image = cv2.morphologyEx(self.use_image,cv2.MORPH_CLOSE,self.kernel,iterations=1 )
         
     def line_detect(self,minlineLength = 60 , maxlineGap = 50, inUturn = False): 
@@ -50,12 +53,14 @@ class ROS_image():
         linePoint = cv2.HoughLinesP(self.use_image,1,np.pi/180 , 
                                     50,None,minlineLength,maxlineGap) 
         #print("test: linepoint",linePoint)
+        view = self.raw_image.copy()
         try: 
             # find the longest line in this frame 
-            count,accumulation_angle = 0 , 0
-            
             Line_set = np.resize(linePoint,(linePoint.shape[0] ,4 )) 
             
+            angleList = []
+            
+            #view = self.raw_image.copy()
 
             for x1,y1,x2,y2  in Line_set:
                 
@@ -63,24 +68,32 @@ class ROS_image():
                 if abs(y2-y1) >  abs(x2-x1) : 
                     if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
                         
-                        cv2.line(self.raw_image,(x1,y1),(x2,y2),(0,255,0),5)
-                        count+=1 
+                        #cv2.line(raw_image,(x1,y1),(x2,y2),(0,255,0),5)
+                        # cv2.line(self.raw_image , (x1,y1),(x2,y2),(0,255,0),5) 
+                        cv2.line(view , (x1,y1),(x2,y2),(0,255,0),5) 
                         cal_angle= math.atan2(x2-x1,abs(y2-y1)+0.001) * 57.3
                         if y2-y1<0:
-                            cal_angle =cal_angle*(-1)
+                            cal_angle = cal_angle*(-1)
                         #print("x2-x1 = ",x2-x1,"y2-y1 = ",y2-y1)
-                        accumulation_angle +=cal_angle
- 
+                        angleList.append(cal_angle)
+            if len(angleList) > 3:
+                angle_avg = sum(angleList) / len(angleList)
+                i=0
+                while i != len(angleList):
+                    if abs(angleList[i] - angle_avg) > 5:
+                        angleList.pop(i)
+                        i-=1
+                    i+=1
                         
             if not inUturn:
-                if count: 
-                    angle = accumulation_angle/count 
+                if len(angleList): 
+                    angle = sum(angleList)/len(angleList) 
                     detectable = True 
                 else:
                     angle = 0 
                     detectable = False
             else:
-                angle = 0 if not count else accumulation_angle/count    
+                angle = 0 if not len(angleList)  else sum(angleList)/len(angleList)   
                 detectable = True if angle else False
                 
                 aq.enqueue(angle)
@@ -95,17 +108,18 @@ class ROS_image():
         
 
         #return detectable , angle 
-        return detectable , acc_angle
+        return detectable , acc_angle , view
 
 class anglequeue : 
-    def __init__(self): 
+    def __init__(self,size):
+        self.size = size 
         self.q = [0]
     def enqueue(self,val):
         if -15 <(abs(val) - self.get()) < 15 : self.q.append(val)
         else: 
             print(abs(val) , self.get(),self.q)
             #input()
-        if len(self.q) > 3: self.q.pop(0) 
+        if len(self.q) > self.size : self.q.pop(0) 
     def get(self) : 
         angle = weight = 0
         for i in self.q:
@@ -119,8 +133,10 @@ class Robot():
     def __init__(self,enhance_factor=1): 
         self.visual_sw = False 
         self.flag = 0
+        self.reverse = 1
         self.inUturn = False 
         self.UturnState = 1
+        self.side = 5
         self.IR_left,self.IR_Right = None ,None 
         self.enhance_factor = enhance_factor
         #self.IMU = namedtuple("IMU",["x","y","theta"])(None,None,None)
@@ -168,24 +184,40 @@ class Robot():
 
 
     def Uturn(self):
-        reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
         rospy.loginfo(f"Uturn in {self.UturnState} state")
         if self.State.Angle == 0 :
-            self.newVelocity(0,0.05,reverse)
+            self.newVelocity(0,0.05,self.reverse)
             return
-        self.newVelocity(0,0.3,reverse)
+
         print(self.State.Angle)
-        if (self.UturnState == 1 or self.UturnState == 3) and self.State.Angle > 35:
-            self.UturnState += 1
-        elif (self.UturnState == 2 or self.UturnState == 4)and self.State.Angle < 25:
-            self.UturnState += 1
-        if self.UturnState == 5 and abs(self.State.Angle) < 10:
+        if self.UturnState == 7 and abs(self.State.Angle) < 10:
             self.inUturn = False
             self.UturnState = 1
             self.newVelocity(0,0)
             rospy.loginfo(" Utrun complete ! ")
-            self.flag = self.flag+1 if self.visual_sw else 0 
+            self.flag = self.flag+1 if self.visual_sw else 0
+            self.reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
+            self.side = 5
+        elif self.UturnState == 4:
+            self.newVelocity(0.3,0)
+            self.side -= 1
+            rospy.loginfo(f"move: {self.side}")
+            if self.side == 0:
+                self.UturnState = 5
+        elif self.UturnState % 2: # self.UturnState == 1,3,5
+            self.newVelocity(0,0.15,self.reverse)
+            if self.State.Angle > 35 and self.UturnState != 3:
+                self.UturnState += 1
+            if self.UturnState == 3 and self.State.Angle < 10:
+                self.UturnState = 4
+        else: # self.UturnState == 2,6
+            self.newVelocity(0,0.1,self.reverse)
+            if self.State.Angle < 25:
+                self.UturnState += 1
+        
+    
  
+
 
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser() 
@@ -198,17 +230,17 @@ if __name__ == "__main__":
     aq = anglequeue()
 
     RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8)
-
+    view = RosImage.use_image.copy()
     while not rospy.is_shutdown(): 
             
         if RosImage.raw_image.any() == True:
             
             RosImage.use_image = RosImage.raw_image.copy() 
             
-            videoFrame = RosImage.raw_image.copy()
+            cv2.imshow("1raw",RosImage.raw_image)
 
             RosImage.preProcessing() 
-            line_detectable , line_angle  = RosImage.line_detect(inUturn = SolarAnt.inUturn)
+            line_detectable , line_angle,view  = RosImage.line_detect(inUturn = SolarAnt.inUturn)
             SolarAnt.State = SolarAnt.State._replace(Line=line_detectable,Angle=line_angle)
             SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
@@ -221,7 +253,8 @@ if __name__ == "__main__":
             else : SolarAnt.inUturn = False
             rospy.loginfo(SolarAnt.State)
             
-        cv2.imshow("Frame",RosImage.raw_image)
+        # cv2.imshow("Frame",RosImage.raw_image)
+        cv2.imshow("Frame",view)
         if cv2.waitKey(50) & 0xFF == ord("q"): 
             break 
     cv2.destroyAllWindows() 

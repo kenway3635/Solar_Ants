@@ -10,6 +10,7 @@
 #include <geometry_msgs/Pose2D.h>
 #include <sensor_msgs/Imu.h>
 #include <vector>
+#include <time.h>
 
 using std::vector;
 
@@ -18,11 +19,20 @@ class ros_node
     public:
         vector<float> joy_velocity = {0,0}, camera_velocity={0,0}, output_velocity={0,0};
         vector<int>ir_detect={0,0,0,0};
-        int mode = 0;
+        int mode = 100;
         bool visualSW = 0, detect = 0, stop_data = 0;
         float odom_omega = 0, imu_omega = 0;
         ros::NodeHandle n;
 
+        double get_time()
+        {
+            double secs =ros::Time::now().toSec();
+            return secs;
+        }
+        void _sleep(float duration)
+        {
+            ros::Duration(duration).sleep();
+        }
         void init_node()
         {
             ros::Time::init();
@@ -35,7 +45,7 @@ class ros_node
             vel_pub.publish(new_vel);
             cmd_stop.publish(stop);
             front_detect_pub.publish(front_detect);
-
+            visualSW_pub.publish(visualSW_data);
             ros::spinOnce();
             r.sleep();
         };

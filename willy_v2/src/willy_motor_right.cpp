@@ -1,8 +1,13 @@
 #include <willy_motor.h>
+#include <chrono>
 
 float Vel_x,Ang_z;
 
-willy_motor::willy_motor() : ID_1(0x01), ID_2(0x02), FC(0x10), cmd_num(0x0002), cmd_numx2(0x04), Gear_Ratio(50), Wheel_Radius(0.075), Wheel_Base(0.255),  last_dir(0), vel(0),is_motor_set(true), C35(4000)  {
+using std::chrono::high_resolution_clock;
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+
+willy_motor::willy_motor() : ID_1(0x01), ID_2(0x02), FC(0x10), cmd_num(0x0002), cmd_numx2(0x04), Gear_Ratio(50), Wheel_Radius(0.075), Wheel_Base(0.255),  last_dir(0), vel(0),is_motor_set(true), C35(3000)  {
 
 	ROS_INFO("initialize");
 	
@@ -37,6 +42,8 @@ VR=cmd->data.at(1);
 
 unsigned short willy_motor::calc_crc(unsigned char *buf, int length) 
 {
+	//auto t1 = high_resolution_clock::now();
+
 	unsigned short crc = 0xFFFF;
 	unsigned char LSB;
 	for (int i = 0; i < length; i++) {
@@ -49,11 +56,16 @@ unsigned short willy_motor::calc_crc(unsigned char *buf, int length)
    			}
   		}
  	}
+	//auto t2 =  high_resolution_clock::now();
+	//auto ms_int = duration_cast<milliseconds>(t2 - t1);
+	//ROS_INFO("calculate crc cost %d ms", ms_int.count());
  	return crc;
+
 };
 
 double willy_motor::hex2dis(unsigned char *data) 
 {
+	//auto t1 = high_resolution_clock::now();
 
 	int hi = 0, lo = 0;
 	double dis = 0;
@@ -61,6 +73,9 @@ double willy_motor::hex2dis(unsigned char *data)
 	lo = (data[2] << 8) + data[3];
 	dis = ((hi*360 + lo*0.036)*deg2rad)/Gear_Ratio;
 
+	//auto t2 =  high_resolution_clock::now();
+	//auto ms_int = duration_cast<milliseconds>(t2 - t1);
+	//ROS_INFO("hex to dis cost %d ms", ms_int.count());
 	return dis;
 
 };
@@ -88,7 +103,8 @@ void willy_motor::send_cmd(unsigned char ID, unsigned short cmd_startpos_, unsig
 	cmd_crc[12] = ((crc & 0xFF00) >> 8);
 
 	ser.write(cmd_crc, 13);
-	usleep(C35*10);
+	usleep(3000);
+	usleep(C35);
 
 	if(ID !=0x00){
 		size_t now_read = ser.available();
@@ -135,6 +151,7 @@ void willy_motor::send_cmd(unsigned char ID, unsigned short cmd_startpos_, unsig
 
 void willy_motor::send_cmd_single(unsigned char ID, unsigned short cmd_pos_, unsigned short cmd_data) 
 {
+
 	unsigned char speed_data[6], cmd_crc[8];
 	speed_data[0] = ID;
 	speed_data[1] = 0x06;
@@ -150,7 +167,8 @@ void willy_motor::send_cmd_single(unsigned char ID, unsigned short cmd_pos_, uns
 	cmd_crc[7] = ((crc & 0xFF00) >> 8);
 
 	ser.write(cmd_crc, 8);
-	usleep(C35*10);
+	usleep(3000);
+	usleep(C35);
 
 	if(ID !=0x00){
 		size_t now_read = ser.available();
@@ -196,6 +214,7 @@ void willy_motor::send_cmd_single(unsigned char ID, unsigned short cmd_pos_, uns
 
 int willy_motor::read_cmd(unsigned char ID, unsigned short cmd_startpos_, unsigned short num) 
 {
+
 	unsigned char ask_data[6], cmd_crc[8];
 	ask_data[0] = ID;
 	ask_data[1] = 0x03;
@@ -211,7 +230,8 @@ int willy_motor::read_cmd(unsigned char ID, unsigned short cmd_startpos_, unsign
 	cmd_crc[7] = ((crc & 0xFF00) >> 8);
 
 	ser.write(cmd_crc, 8);
-	usleep(C35*10);
+	usleep(3000);
+	usleep(C35);
 
 	if(ID !=0x00){
 		size_t now_read = ser.available();
@@ -306,6 +326,7 @@ void willy_motor::run()
 
     while(ros::ok()) 
 	{
+		//auto t1 =  high_resolution_clock::now();
 		if (last_cmd_counter != cmd_counter) 
 		{
 			//VR =  Vel_x +  Ang_z  * Wheel_Base;
@@ -313,21 +334,42 @@ void willy_motor::run()
 		   	vel_data=calculate_cmd(VR);
 			
 		}
-			send_cmd(ID_2, 0x0484, vel_data);
-			
-			vr_vel.data = read_cmd(ID_2, 0x00CE, 2);
-			// vr_temp.data=read_cmd(ID_1, 0x00F8,2);
-			// vr_cmd.data=read_cmd(ID_2, 0x00C8,2);
-			// vr_load.data=read_cmd(ID_2, 0x00D8,2);
-			
-			motor_pub.publish(vr_vel);
-			// temp_pub.publish(vr_temp);
-			// cmd_pub.publish(vr_cmd);
-			// load_pub.publish(vr_load);
+		//auto t2 =  high_resolution_clock::now();
+		//auto ms_int = duration_cast<milliseconds>(t2 - t1);
+		//ROS_INFO("calculate_cmd cost %d ms", ms_int.count());
 
-			last_cmd_counter = cmd_counter;
-			ros::spinOnce();
-			loop_rate.sleep();	
+
+		send_cmd(ID_2, 0x0484, vel_data);
+
+		//auto t3 =  high_resolution_clock::now();
+		//ms_int = duration_cast<milliseconds>(t3 - t2);
+		//ROS_INFO("send cmd cost %d ms", ms_int.count());
+		
+		vr_vel.data = read_cmd(ID_2, 0x00CE, 2);
+		// vr_temp.data=read_cmd(ID_1, 0x00F8,2);
+		// vr_cmd.data=read_cmd(ID_2, 0x00C8,2);
+		// vr_load.data=read_cmd(ID_2, 0x00D8,2);
+
+		//auto t4 =  high_resolution_clock::now();
+		//ms_int = duration_cast<milliseconds>(t4 - t3);
+		//ROS_INFO("read cmd cost %d ms", ms_int.count());
+		
+		motor_pub.publish(vr_vel);
+		// temp_pub.publish(vr_temp);
+		// cmd_pub.publish(vr_cmd);
+		// load_pub.publish(vr_load);
+
+
+
+		last_cmd_counter = cmd_counter;
+		ros::spinOnce();
+
+		//auto t5 =  high_resolution_clock::now();
+		//ms_int = duration_cast<milliseconds>(t5 - t4);
+		//ROS_INFO("ros publisher cost %d ms", ms_int.count());
+
+		loop_rate.sleep();	
+		
 		
     }
 }

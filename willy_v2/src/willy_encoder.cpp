@@ -146,6 +146,7 @@ int main(int argc, char **argv)
 		static tf::TransformBroadcaster odom_footprint;
 		static tf::TransformBroadcaster footprint_baselink;
 		static tf::TransformBroadcaster imu;
+		static tf::TransformBroadcaster camera;
 	   	tf::Transform transform;
 		tf::Quaternion q;
 		ros::Rate loop_rate(20);
@@ -162,10 +163,15 @@ int main(int argc, char **argv)
 		// transform.setRotation(q);
 		// odom_footprint.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "odom", "base_link"));
 
-		// q.setRPY(0, 0, 0);
-		// transform.setOrigin(tf::Vector3(0.16, -0.10, 0.1));
-		// transform.setRotation(q);
-		// imu.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link","imu_link"));
+		q.setRPY(0, 0, 0);
+		transform.setOrigin(tf::Vector3(0.16, -0.10, 0.1));
+		transform.setRotation(q);
+		imu.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link","imu_link"));
+
+		q.setRPY(0, 0, 0);
+		transform.setOrigin(tf::Vector3(0, 0, 0));
+		transform.setRotation(q);
+		camera.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "base_link","camera_link"));
 
 		ros::spinOnce();
 		loop_rate.sleep();

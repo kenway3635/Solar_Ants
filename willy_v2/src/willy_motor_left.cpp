@@ -2,7 +2,7 @@
 
 float Vel_x,Ang_z;
 
-willy_motor::willy_motor() : ID_1(0x01), ID_2(0x02), FC(0x10), cmd_num(0x0002), cmd_numx2(0x04), Gear_Ratio(50), Wheel_Radius(0.075), Wheel_Base(0.255),  last_dir(0), vel(0),is_motor_set(true), C35(4000)  {
+willy_motor::willy_motor() : ID_1(0x01), ID_2(0x02), FC(0x10), cmd_num(0x0002), cmd_numx2(0x04), Gear_Ratio(50), Wheel_Radius(0.075), Wheel_Base(0.255),  last_dir(0), vel(0),is_motor_set(true), C35(3000)  {
 
 	ROS_INFO("initialize");
 	
@@ -91,7 +91,8 @@ void willy_motor::send_cmd(unsigned char ID, unsigned short cmd_startpos_, unsig
 	cmd_crc[12] = ((crc & 0xFF00) >> 8);
 
 	ser.write(cmd_crc, 13);
-	usleep(C35*10);
+	usleep(3000);
+	usleep(C35);
 
 	if(ID !=0x00){
 		size_t now_read = ser.available();
@@ -153,7 +154,8 @@ void willy_motor::send_cmd_single(unsigned char ID, unsigned short cmd_pos_, uns
 	cmd_crc[7] = ((crc & 0xFF00) >> 8);
 
 	ser.write(cmd_crc, 8);
-	usleep(C35*10);
+	usleep(3000);
+	usleep(C35);
 
 	if(ID !=0x00){
 		size_t now_read = ser.available();
@@ -214,7 +216,8 @@ int willy_motor::read_cmd(unsigned char ID, unsigned short cmd_startpos_, unsign
 	cmd_crc[7] = ((crc & 0xFF00) >> 8);
 
 	ser.write(cmd_crc, 8);
-	usleep(C35*10);
+	usleep(3000);
+	usleep(C35);
 
 	if(ID !=0x00){
 		size_t now_read = ser.available();

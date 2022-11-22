@@ -1,99 +1,10 @@
 #include <rover.h>
+#include "ros_node.h"
 #include "time.h"
+#include <locale.h>
 
 
-double rad2deg(double radians)
-  {
-    return radians * 180.0 / M_PI;
-  }
-
-void IRCallback1(const std_msgs::Bool::ConstPtr& msg)
-{
-    //ROS_INFO("distance: [%f]", msg->range);
-    FR=msg->data;
-}
-void IRCallback2(const std_msgs::Bool::ConstPtr& msg)
-{
-    //ROS_INFO("distance: [%f]", msg->range);
-    FL=msg->data;
-}
-void IRCallback3(const std_msgs::Bool::ConstPtr& msg)
-{
-    //ROS_INFO("distance: [%f]", msg->range);
-    BR=msg->data;
-}
-void IRCallback4(const std_msgs::Bool::ConstPtr& msg)
-{
-    //ROS_INFO("distance: [%f]", msg->range);
-     BL=msg->data;
-}
-
-void Mode(const std_msgs::Int32::ConstPtr& msg)
-{
-     mode=msg->data;
-}
-
- void velCallback(const geometry_msgs::Twist::ConstPtr& msg)
-{
- Vel_x=msg->linear.x;
- Ang_z=msg->angular.z;
-}
-
- void Cam_velCallback(const geometry_msgs::Twist::ConstPtr& msg)
-{
- cam_vel_x=msg->linear.x;
- cam_ang_z=msg->angular.z;
-}
-
- void clickCallback(const std_msgs::Bool::ConstPtr& msg)
-{
-button=msg->data;
-}
-
-
-void odomCallback(const nav_msgs::Odometry::ConstPtr& msg)
-{
-  geometry_msgs::Pose2D pose2d;
-  pose2d.x = msg->pose.pose.position.x;
-  pose2d.y = msg->pose.pose.position.y;
-    
-  // ROS_INFO("Seq: [%d]", msg->header.seq);
-  // ROS_INFO("Position-> x: [%f], y: [%f], z: [%f]", msg->pose.pose.position.x,msg->pose.pose.position.y, msg->pose.pose.position.z);
-  // ROS_INFO("Orientation-> x: [%f], y: [%f], z: [%f], w: [%f]", msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z, msg->pose.pose.orientation.w);
-  // ROS_INFO("Vel-> Linear: [%f], Angular: [%f]", msg->twist.twist.linear.x,msg->twist.twist.angular.z);
-    linear_vel_fb = msg->twist.twist.linear.x;
-    angular_vel_fb = msg->twist.twist.angular.z;
-      tf::Quaternion q(
-        msg->pose.pose.orientation.x,
-        msg->pose.pose.orientation.y,
-        msg->pose.pose.orientation.z,
-        msg->pose.pose.orientation.w
-        );
-    tf::Matrix3x3 m(q);
-    double roll, pitch, yaw;
-    m.getRPY(roll, pitch, yaw);
-
-   x= pose2d.x;
-   y= pose2d.y;
-   theta=rad2deg(yaw);
-  pose2d.theta = theta;
-  pub_pose.publish(pose2d);
-}
-
-float odom_omega(0), imu_omega(0);
-ros::Subscriber imu_sub, encoder_sub;
-
-void encoderCallback(const nav_msgs::Odometry::ConstPtr& msg)
-{
-  odom_omega = msg->twist.twist.angular.z;
-}
-
- void imuCallback(const sensor_msgs::Imu::ConstPtr& msg)
-{
- imu_omega=msg->angular_velocity.z;
-}
-
-float slip_ratio(float enhance)
+float slip_ratio(float enhance, float odom_omega, float imu_omega)
 {
   static std::deque<float> avgloss(10);
   float ratio, avg;
@@ -161,38 +72,18 @@ float tf_velocity(float velocity = 0, float bound = 1)//check bound of the input
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "rover_control");
-  ros::NodeHandle n;
-  ros::Time::init();
-  ros::Rate r(30);
-
-  vel_pub =  n.advertise<geometry_msgs::Twist>("cmd_vel", 1);
-  cmd_stop =  n.advertise<std_msgs::Bool>("cmd_stop",1);
-  front_detect_pub = n.advertise<std_msgs::Bool>("front_detect",1);
-  vel_sub = n.subscribe("new_cmd_vel", 1, velCallback);
-  vel_camera = n.subscribe("visual_cmd_vel", 1, Cam_velCallback);
-  visualSW_pub = n.advertise<std_msgs::Bool>("visualSW",1);
-
-  imu_sub = n.subscribe("imu/data_raw", 10, imuCallback);
-  encoder_sub = n.subscribe("odom", 1, encoderCallback);
-  //-----------------------------------------------------------------------------
-  front_right = n.subscribe("front_right_ir",10,IRCallback1);
-  front_left = n.subscribe("front_left_ir",10,IRCallback2);
-  back_right = n.subscribe("back_right_ir",10,IRCallback3);
-  back_left = n.subscribe("back_left_ir",10,IRCallback4);
-  //----------------------------------------------------------------------------
-  mode_sub=n.subscribe("/Mode",1,Mode);
-  click_sub=n.subscribe("click",1,clickCallback);
-  odom_sub = n.subscribe("odometry/filtered", 1, odomCallback);
-  pub_pose = n.advertise<geometry_msgs::Pose2D>("pose2d", 10);
-
+setlocale( LC_ALL, "" ); 
+ros::init(argc, argv, "rover_control");
+ros_node node;
+auto n = node.n;
+node.init_node();
 
 float last_linear_vel(0),last_angular_vel(0), emergency_brake_vel(0),slip_gain(0), enhance_factor(0);//save last velocity value for recovery
 bool stamp(0),visual_stamp(0),ir_stamp(0);
-char last_trig, trig_temp; 
-auto &detect = front_detect.data;
-detect = false;
-double not_trigger(0),IR_trigger(0),duration(0), stop_time(0), recovery_vel(0),kp(1),ki(0),kd(0);
+string last_trig, trig_temp; 
+
+float  stop_time(0), recovery_vel(0),kp(1),ki(0),kd(0);
+double not_trigger(0),IR_trigger(0),duration(0);
 bool anti_skid(0);
 
 n.getParam("/rover_control/time_to_stop",stop_time);
@@ -204,34 +95,34 @@ n.getParam("/rover_control/anti_skid",anti_skid);
 n.getParam("/rover_control/emergency_brake_ratio",emergency_brake_vel);
 n.getParam("/rover_control/enhance_factor",enhance_factor);
 
-visualSW_data.data = false;
-
 while (ros::ok())
   {
-      slip_gain = slip_ratio(enhance_factor);
-      ROS_INFO("last trig = %c", last_trig);
-      detect = false;
-      if(mode == 99)//emergency stop AMR
+      slip_gain = slip_ratio(enhance_factor, node.odom_omega, node.imu_omega);
+      //ROS_INFO("last trig = %s", last_trig.c_str());
+      node.detect = false;
+      //ROS_INFO(" time = %f",node.get_time());
+      if(node.mode == 99)//emergency stop AMR
       {
-        stop.data=true;
-        new_vel.linear.x = 0;
-        new_vel.angular.z = 0;
+        node.stop_data=true;
+        node.output_velocity = {0,0};
         ROS_INFO("Stop!");
       }
       else
       {
-        stop.data=false;
-        if ((FL==true)||(FR==true)||(BL==true)||(BR==true))//cliff detected
+        node.stop_data=false;
+        if (node.ir_detect[0]||node.ir_detect[1]||node.ir_detect[2]||node.ir_detect[3])//cliff detected
           {
-            IR_trigger = ros::Time::now().toSec();
-            duration = (double)(IR_trigger-not_trigger);
+            IR_trigger = node.get_time();
+            duration = (IR_trigger-not_trigger);
             
             //ROS_INFO("trigger duration time = %f",duration);
+            //ROS_INFO("IR trigger time is  = %f",IR_trigger);
+            //ROS_INFO("not trigger time is  = %f",not_trigger);
             //ROS_INFO("cliff  detected!!, doing self recovery");
             //new_vel.linear.x = go_minimum(last_linear_vel*(stop_time-duration)/stop_time);
             //new_vel.angular.z = go_minimum(last_angular_vel*(stop_time-duration)/stop_time);
-            new_vel.linear.x = last_linear_vel;
-            new_vel.angular.z = last_angular_vel;
+
+            node.output_velocity = {last_linear_vel, last_angular_vel};
 
             if (duration > stop_time)
             {
@@ -241,124 +132,113 @@ while (ros::ok())
               { 
                 //ROS_INFO("reset speed to 0");
                 //stop.data=true;
-                new_vel.linear.x =0;
-                new_vel.angular.z=0;
-                vel_pub.publish(new_vel);
-                ros::Duration(1).sleep();
+                node.output_velocity = {0,0};
+                node.update();
+                node._sleep(1);
                 ir_stamp = false;
               }
               
-              else if((last_trig == 'b' && FL)||( last_trig == 'f' &&BL))
+              else if((last_trig == "BL" && node.ir_detect[0])||( last_trig == "FL" &&node.ir_detect[2]))
               {
-                new_vel.linear.x =0;
-                new_vel.angular.z=-recovery_vel*2;
+                node.output_velocity = {0,-recovery_vel*2};
               }
-              else if((last_trig == 'B' &&FR)||(last_trig == 'F'&&BR))
+              else if((last_trig == "BR" &&node.ir_detect[1])||(last_trig == "FR"&&node.ir_detect[3]))
               {
-                new_vel.linear.x =0;
-                new_vel.angular.z=recovery_vel*2;
+                node.output_velocity = {0,recovery_vel*2};
               }
-              else if (FL||FR)
+              else if (node.ir_detect[1]||node.ir_detect[0])
               {
-                new_vel.linear.x =-recovery_vel;
-                new_vel.angular.z=0;
+                node.output_velocity = {-recovery_vel,0};
               }
-              else if(BL||BR)
+              else if(node.ir_detect[3]||node.ir_detect[2])
               { 
-                new_vel.linear.x =recovery_vel;
-                new_vel.angular.z=0;
+                node.output_velocity = {recovery_vel,0};
               }
               
-              if ((FR)&&(FL))
-                detect = true;
+              if ((node.ir_detect[1])&&(node.ir_detect[0]))
+                node.detect = true;
               else
-                detect = false;
+                node.detect = false;
           
-              if (FL)
-                trig_temp = 'f';
-              else if (FR)
-                  trig_temp = 'F';
-              else if (BL)
-                  trig_temp = 'b';
-              else if (BR)
-                  trig_temp = 'B'; 
+              if (node.ir_detect[0])
+                trig_temp = "FL";
+              else if (node.ir_detect[1])
+                  trig_temp = "FR";
+              else if (node.ir_detect[2])
+                  trig_temp = "BL";
+              else if (node.ir_detect[3])
+                  trig_temp = "BR"; 
+              node.update();
             }
           }
         else
         {
           ir_stamp = true;
           last_trig = trig_temp;
-          not_trigger = ros::Time::now().toSec();
+          not_trigger = node.get_time();
           if (stamp == true)
           {
             //stop.data=true;
             //ROS_INFO("reset speed to 0(in board)");
-            new_vel.linear.x = 0;
-            new_vel.angular.z= 0;
-            vel_pub.publish(new_vel);
+            node.output_velocity = {0,0};
+            node.update();
             ros::Duration(1).sleep();
             stamp = false;
           }
-          else if(mode == 1)//manual control AMR
+          else if(node.mode == 1)//manual control AMR
           {
             ROS_INFO("Manual");
-            new_vel.linear.x = Vel_x;
-            new_vel.angular.z= Ang_z;
-            last_linear_vel = Vel_x;
-            last_angular_vel = Ang_z;
+            node.output_velocity = node.joy_velocity;
+            last_linear_vel = node.joy_velocity[0];
+            last_angular_vel = node.joy_velocity[1];
             if (visual_stamp)  // for reset visualSW data
             {
               visual_stamp = false;
-              visualSW_data.data = false;
-              visualSW_pub.publish(visualSW_data);
+              node.visualSW = false;
             }
           }
-          else if(mode == 0)//camera control
+          else if(node.mode == 0)//camera control
           {
             if (visual_stamp == false)
             {
                 visual_stamp = true;
-                visualSW_data.data = true;
-                visualSW_pub.publish(visualSW_data);
+                node.visualSW = true;
             }
             
-            //ROS_INFO("camera mode !");
-            if (detect)
+            ROS_INFO("camera mode !");
+            if (node.detect)
             {
               continue;
             }
-            last_linear_vel=cam_vel_x;
-            last_angular_vel=cam_ang_z;
-            new_vel.linear.x=cam_vel_x;
-            new_vel.angular.z=cam_ang_z;
+            node.output_velocity = node.camera_velocity;
+            last_linear_vel = node.camera_velocity[0];
+            last_angular_vel = node.camera_velocity[1];
           }
           else//stationary mode
 
           {
-            stop.data=true;
-            //ROS_INFO("--------------------Press Any Key To Start------------------");
-            new_vel.linear.x=0;
-            new_vel.angular.z=0;
+            node.stop_data=true;
+            ROS_INFO("--------------------Press アニキ To Start------------------");
+            node.output_velocity = {0,0};
           }
         }
     }
-  ROS_INFO("new velocity is %f,  %f",new_vel.linear.x,new_vel.angular.z);
+  //ROS_INFO("new velocity is %f,  %f",new_vel.linear.x,new_vel.angular.z);
   //ROS_INFO("PID x is %f, PID z is %f", PID(new_vel.linear.x, linear_vel_fb, 1,0,0), PID(new_vel.angular.z, angular_vel_fb, 1,0,0));
-  ROS_INFO("linear_vel_fb is %f, angular_vel_fb is %f", linear_vel_fb, angular_vel_fb);
-  ROS_INFO("slip gain is %f",slip_gain);
+  //ROS_INFO("linear_vel_fb is %f, angular_vel_fb is %f", linear_vel_fb, angular_vel_fb);
+  //OS_INFO("slip gain is %f",slip_gain);
   //ROS_INFO("linear_slip_gain is %f, angular_slip_gain is %f", slip_ratio(new_vel.linear.x, linear_vel_fb), slip_ratio(new_vel.angular.z, angular_vel_fb));
   //new_vel.linear.x = PID(new_vel.linear.x, linear_vel_fb, kp,ki,kd);
   //new_vel.angular.z = PID(new_vel.angular.z, angular_vel_fb, kp,ki,kd);
-  new_vel.linear.x = tf_velocity(new_vel.linear.x, 0.4948);
-  new_vel.angular.z = tf_velocity(new_vel.angular.z, 1.94) ;
+  node.output_velocity[0] = tf_velocity(node.output_velocity[0], 0.4948);
+  node.output_velocity[1] = tf_velocity(node.output_velocity[1], 1.94) ;
 
   if (anti_skid)
   {
     if (slip_gain<emergency_brake_vel)
     {
-      new_vel.linear.x = 0;
-      new_vel.angular.z = 0;
-      stop.data = true;
+      node.output_velocity = {0,0};
+      node.stop_data = true;
     }
     // else
     // {
@@ -369,12 +249,7 @@ while (ros::ok())
   }
  
 
-  vel_pub.publish(new_vel);
-  cmd_stop.publish(stop);
-  front_detect_pub.publish(front_detect);
-
-  ros::spinOnce();
-  r.sleep();
+  node.update();
   
   }
   return 0;

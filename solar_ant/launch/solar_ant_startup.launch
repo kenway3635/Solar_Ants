@@ -2,7 +2,7 @@
 
         <arg name = "Driver_Baud" default = "115200" />
 	<arg name = "bluetooth" default = "/dev/Bluetooth" />
-	<arg name = "control_hz" default = "20" />
+	<arg name = "control_hz" default = "50" />
 	
 	<node pkg="willy_v2" type="willy_motor_left" name="willy_motor_left" >
 		<param name="Baudrate" value="$(arg Driver_Baud)" />
