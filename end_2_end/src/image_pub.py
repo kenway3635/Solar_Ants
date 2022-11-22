@@ -41,7 +41,7 @@ bridge = CvBridge()
 pub = rospy.Publisher('image', Image, queue_size=5)
 while cap.isOpened() :
   ret, frame = cap.read()
-  #frame=cv2.resize(frame,(320,180))
+  frame=cv2.resize(frame,(320,180))
   cv2.imshow('frame', frame)
   imgMsg = cv2_to_imgmsg(frame)
   pub.publish(imgMsg)
