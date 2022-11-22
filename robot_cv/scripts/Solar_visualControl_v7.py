@@ -60,39 +60,50 @@ class ROS_image():
             
             angleList = []
             
-            #view = self.raw_image.copy()
-
-            for x1,y1,x2,y2  in Line_set:
-                
-                
-                if abs(y2-y1) >  abs(x2-x1) : 
-                    if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
-                        
-                        #cv2.line(raw_image,(x1,y1),(x2,y2),(0,255,0),5)
-                        # cv2.line(self.raw_image , (x1,y1),(x2,y2),(0,255,0),5) 
-                        cv2.line(view , (x1,y1),(x2,y2),(0,255,0),5) 
-                        cal_angle= math.atan2(x2-x1,abs(y2-y1)+0.001) * 57.3
-                        if y2-y1<0:
-                            cal_angle = cal_angle*(-1)
-                        #print("x2-x1 = ",x2-x1,"y2-y1 = ",y2-y1)
-                        angleList.append(cal_angle)
-            if len(angleList) > 3:
-                angle_avg = sum(angleList) / len(angleList)
-                i=0
-                while i != len(angleList):
-                    if abs(angleList[i] - angle_avg) > 5:
-                        angleList.pop(i)
-                        i-=1
-                    i+=1
-                        
             if not inUturn:
+                for x1,y1,x2,y2  in Line_set:
+                
+                    if abs(y2-y1) >  abs(x2-x1) : 
+                        if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
+                            
+                            #cv2.line(raw_image,(x1,y1),(x2,y2),(0,255,0),5)
+                            # cv2.line(self.raw_image , (x1,y1),(x2,y2),(0,255,0),5) 
+                            cv2.line(view , (x1,y1),(x2,y2),(0,255,0),5) 
+                            cal_angle= math.atan2(x2-x1,abs(y2-y1)+0.001) * 57.3
+                            if y2-y1<0:
+                                cal_angle = cal_angle*(-1)
+                            #print("x2-x1 = ",x2-x1,"y2-y1 = ",y2-y1)
+                            angleList.append(cal_angle)
                 if len(angleList): 
                     angle = sum(angleList)/len(angleList) 
                     detectable = True 
                 else:
                     angle = 0 
                     detectable = False
+
             else:
+                for x1,y1,x2,y2  in Line_set:
+                
+                    if abs(y2-y1) >  abs(x2-x1) : 
+                        if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
+                            cv2.line(view , (x1,y1),(x2,y2),(0,255,0),5) 
+                            cal_angle = abs(math.atan2(x2-x1,abs(y2-y1)+0.001)) * 57.3
+                            angleList.append(cal_angle)
+                    else : 
+                        if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
+                            cv2.line(view , (x1,y1),(x2,y2),(0,255,255),5) 
+                            cal_angle = 90 - abs(math.atan2(x2-x1,abs(y2-y1)+0.001)) * 57.3
+                            angleList.append(cal_angle)
+                if len(angleList) > 3:
+                    angle_avg = sum(angleList) / len(angleList)
+                    i=0
+                    while i != len(angleList):
+                        if abs(angleList[i] - angle_avg) > 5:
+                            angleList.pop(i)
+                            i-=1
+                        i+=1
+                            
+
                 angle = 0 if not len(angleList)  else sum(angleList)/len(angleList)   
                 detectable = True if angle else False
                 
@@ -111,8 +122,8 @@ class ROS_image():
         return detectable , acc_angle , view
 
 class anglequeue : 
-    def __init__(self,size):
-        self.size = size 
+    def __init__(self):
+        self.size = 3
         self.q = [0]
     def enqueue(self,val):
         if -15 <(abs(val) - self.get()) < 15 : self.q.append(val)
@@ -125,7 +136,7 @@ class anglequeue :
         for i in self.q:
             weight+=1
             angle+= abs(i) * weight
-        return angle/6
+        return angle / (self.size**2 + self.size) * 2
 
 #----------- other Subscriber callback function 
 
@@ -199,19 +210,23 @@ class Robot():
             self.reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
             self.side = 5
         elif self.UturnState == 4:
-            self.newVelocity(0.3,0)
+            self.newVelocity(0.15,0)
             self.side -= 1
             rospy.loginfo(f"move: {self.side}")
             if self.side == 0:
                 self.UturnState = 5
+        elif self.UturnState == 5:
+            self.newVelocity(0,0.2,self.reverse)
+            if self.State.Angle > 20 :
+                self.UturnState += 2
         elif self.UturnState % 2: # self.UturnState == 1,3,5
-            self.newVelocity(0,0.15,self.reverse)
-            if self.State.Angle > 35 and self.UturnState != 3:
+            self.newVelocity(0,0.2,self.reverse)
+            if self.State.Angle > 30 and self.UturnState == 1:
                 self.UturnState += 1
             if self.UturnState == 3 and self.State.Angle < 10:
                 self.UturnState = 4
         else: # self.UturnState == 2,6
-            self.newVelocity(0,0.1,self.reverse)
+            self.newVelocity(0,0.2,self.reverse)
             if self.State.Angle < 25:
                 self.UturnState += 1
         
@@ -236,11 +251,9 @@ if __name__ == "__main__":
         if RosImage.raw_image.any() == True:
             
             RosImage.use_image = RosImage.raw_image.copy() 
-            
-            cv2.imshow("1raw",RosImage.raw_image)
 
             RosImage.preProcessing() 
-            line_detectable , line_angle,view  = RosImage.line_detect(inUturn = SolarAnt.inUturn)
+            line_detectable , line_angle, view  = RosImage.line_detect(inUturn = SolarAnt.inUturn)
             SolarAnt.State = SolarAnt.State._replace(Line=line_detectable,Angle=line_angle)
             SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
@@ -253,8 +266,7 @@ if __name__ == "__main__":
             else : SolarAnt.inUturn = False
             rospy.loginfo(SolarAnt.State)
             
-        # cv2.imshow("Frame",RosImage.raw_image)
-        cv2.imshow("Frame",view)
+        cv2.imshow("draw",view)
         if cv2.waitKey(50) & 0xFF == ord("q"): 
             break 
     cv2.destroyAllWindows() 
