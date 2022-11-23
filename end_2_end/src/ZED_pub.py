@@ -91,14 +91,14 @@ def main():
     left_info_pub = rospy.Publisher('ZED/left/camera_info',CameraInfo,queue_size =1)
     right_info_pub = rospy.Publisher('ZED/right/camera_info',CameraInfo,queue_size = 1)
     left_info = camera_Info('left','vga')
-    right_info = camera_Info('left','vga')
+    right_info = camera_Info('right','vga')
     while cap.isOpened() :
         ret, frame = cap.read()
         #frame=cv2.resize(frame,(320,180))
         height, width, channels = frame.shape   
         left_Image = frame[0:height, 0:int(width/2)] #this line crops
         right_Image = frame[0:height, int(width/2):width] #this line crops
-        #cv2.imshow('left', left_Image)
+        cv2.imshow('left', left_Image)
         #cv2.imshow('right',right_Image)
         left_imgMsg = cv2_to_imgmsg(left_Image)
         right_imgMsg = cv2_to_imgmsg(right_Image)
