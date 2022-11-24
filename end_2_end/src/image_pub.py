@@ -24,8 +24,8 @@ def cv2_to_imgmsg(cv_image):
 
 cap = cv2.VideoCapture(3)
 # 設定影像的尺寸大小
-#cap.set(cv2.CAP_PROP_FRAME_WIDTH,320)
-#cap.set(cv2.CAP_PROP_FRAME_HEIGHT,180)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH,320)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT,240)
 #fps
 cap.set(cv2.CAP_PROP_FPS , 30)
 #set maxium buffer size
@@ -41,7 +41,7 @@ bridge = CvBridge()
 pub = rospy.Publisher('image', Image, queue_size=5)
 while cap.isOpened() :
   ret, frame = cap.read()
-  frame=cv2.resize(frame,(320,180))
+  #frame=cv2.resize(frame,(320,180))
   cv2.imshow('frame', frame)
   imgMsg = cv2_to_imgmsg(frame)
   pub.publish(imgMsg)

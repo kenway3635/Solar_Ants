@@ -69,12 +69,12 @@ def camera_Info(pos, res):
     
 
 def main():
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(3)
     # 設定影像的尺寸大小
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH,1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT,480)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH,1344)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT,376)
     #fps
-    cap.set(cv2.CAP_PROP_FPS , 10)
+    #cap.set(cv2.CAP_PROP_FPS , 15)
     #set maxium buffer size
     #cap.set(cv2.CAP_PROP_BUFFERSIZE, 20)
     #disable auto focus
@@ -102,6 +102,7 @@ def main():
         #cv2.imshow('right',right_Image)
         left_imgMsg = cv2_to_imgmsg(left_Image)
         right_imgMsg = cv2_to_imgmsg(right_Image)
+        #print(left_Image.shape)
  
 
         left_pub.publish(left_imgMsg)
