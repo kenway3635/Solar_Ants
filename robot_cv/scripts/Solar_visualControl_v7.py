@@ -39,7 +39,7 @@ class ROS_image():
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
     
-        self.use_image = cv2.cvtColor(self.use_image,cv2.COLOR_BGR2HSV)
+        self.use_image = cv2.cvtColor(self.use_image,cv2.COLOR_BGR2GRAY)
         cv2.imshow("HSV",self.use_image)
         #self.use_image = cv2.inRange(self.use_image,(0,0,150),(100,100,255))
         #cv2.imshow("delete",self.use_image)
@@ -126,7 +126,7 @@ class ROS_image():
             if not inUturn:
                 acc_angle = angle
             elif self.cameraFail == 0:
-                aq.get()
+                acc_angle = aq.get()
             else:
                 acc_angle = 0
             
@@ -216,7 +216,7 @@ class Robot():
             return
 
         if self.UturnState != 4:
-            self.newVelocity(0,0.2,self.reverse)
+            self.newVelocity(0,0.3,self.reverse)
 
         if self.UturnState == 6:
             if abs(self.State.Angle) < 10:
@@ -266,7 +266,7 @@ if __name__ == "__main__":
             
         if RosImage.raw_image.any() == True:
             
-            RosImage.use_image = RosImage.raw_image.copy() 
+            RosImage.use_image = RosImage.raw_image.copy()
 
             RosImage.preProcessing() 
             line_detectable , line_angle, view  = RosImage.line_detect(inUturn = SolarAnt.inUturn)
@@ -283,7 +283,14 @@ if __name__ == "__main__":
                     SolarAnt.Uturn()
                 else:
                     SolarAnt.Move() 
-            else : SolarAnt.inUturn = False
+            else :
+                print("manual mode")
+                SolarAnt.inUturn = False
+                SolarAnt.UturnState = 1
+                SolarAnt.newVelocity(0,0)
+                SolarAnt.flag = 0
+                SolarAnt.reverse = 1
+                SolarAnt.side = 5
             rospy.loginfo(SolarAnt.State)
             
         cv2.imshow("draw",view)
