@@ -27,6 +27,9 @@ class ROS_image():
             
         self.raw_image = np.zeros((180,320,3) , dtype=np.uint8)
         self.use_image = None
+
+        self.cameraFail = 0
+
         try:self.listener()
         except: raise BaseException("ROS Subscriber Error")
         
@@ -74,11 +77,13 @@ class ROS_image():
                                 cal_angle = cal_angle*(-1)
                             #print("x2-x1 = ",x2-x1,"y2-y1 = ",y2-y1)
                             angleList.append(cal_angle)
-                if len(angleList): 
+                if len(angleList):
+                    self.cameraFail = 0
                     angle = sum(angleList)/len(angleList) 
                     detectable = True 
                 else:
-                    angle = 0 
+                    angle = 0
+                    self.cameraFail += 1
                     detectable = False
 
             else:
@@ -102,7 +107,11 @@ class ROS_image():
                             angleList.pop(i)
                             i-=1
                         i+=1
-                            
+                if len(angleList) < 3:
+                    self.cameraFail += 1
+                else:
+                    self.cameraFail = 0
+
 
                 angle = 0 if not len(angleList)  else sum(angleList)/len(angleList)   
                 detectable = True if angle else False
@@ -113,9 +122,14 @@ class ROS_image():
             angle = 0
             detectable = False
         
-        finally : 
-        
-            acc_angle = aq.get() if inUturn else angle
+        finally:
+            if not inUturn:
+                acc_angle = angle
+            elif self.cameraFail == 0:
+                aq.get()
+            else:
+                acc_angle = 0
+            
         
 
         #return detectable , angle 
@@ -152,7 +166,7 @@ class Robot():
         self.enhance_factor = enhance_factor
         #self.IMU = namedtuple("IMU",["x","y","theta"])(None,None,None)
         self.State = namedtuple("State",["Fall","Line","Angle"])(False,False,0)
-        self.velocity = Twist() 
+        self.velocity = Twist()
         self.Register()
         
     def Register(self): 
@@ -196,39 +210,41 @@ class Robot():
 
     def Uturn(self):
         rospy.loginfo(f"Uturn in {self.UturnState} state")
+        print(self.State.Angle)
         if self.State.Angle == 0 :
             self.newVelocity(0,0.05,self.reverse)
             return
 
-        print(self.State.Angle)
-        if self.UturnState == 7 and abs(self.State.Angle) < 10:
-            self.inUturn = False
-            self.UturnState = 1
-            self.newVelocity(0,0)
-            rospy.loginfo(" Utrun complete ! ")
-            self.flag = self.flag+1 if self.visual_sw else 0
-            self.reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
-            self.side = 5
+        if self.UturnState != 4:
+            self.newVelocity(0,0.2,self.reverse)
+
+        if self.UturnState == 6:
+            if abs(self.State.Angle) < 10:
+                self.inUturn = False
+                self.UturnState = 1
+                self.newVelocity(0,0)
+                rospy.loginfo(" Utrun complete ! ")
+                self.flag = self.flag+1 if self.visual_sw else 0
+                self.reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
+                self.side = 5
+        elif self.UturnState == 5:
+            if self.State.Angle > 20 :
+                self.UturnState = 6
         elif self.UturnState == 4:
             self.newVelocity(0.15,0)
             self.side -= 1
             rospy.loginfo(f"move: {self.side}")
             if self.side == 0:
                 self.UturnState = 5
-        elif self.UturnState == 5:
-            self.newVelocity(0,0.2,self.reverse)
-            if self.State.Angle > 20 :
-                self.UturnState += 2
-        elif self.UturnState % 2: # self.UturnState == 1,3,5
-            self.newVelocity(0,0.2,self.reverse)
-            if self.State.Angle > 30 and self.UturnState == 1:
-                self.UturnState += 1
-            if self.UturnState == 3 and self.State.Angle < 10:
+        elif self.UturnState == 3:
+            if self.State.Angle < 10:
                 self.UturnState = 4
-        else: # self.UturnState == 2,6
-            self.newVelocity(0,0.2,self.reverse)
+        elif self.UturnState == 2:
             if self.State.Angle < 25:
-                self.UturnState += 1
+                self.UturnState = 3
+        else:
+            if self.State.Angle > 30:
+                self.UturnState = 2
         
     
  
@@ -257,6 +273,10 @@ if __name__ == "__main__":
             SolarAnt.State = SolarAnt.State._replace(Line=line_detectable,Angle=line_angle)
             SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
+
+            if RosImage.cameraFail == 3:
+                SolarAnt.newVelocity(0,0)
+                print("Camera Fail")
 
             if SolarAnt.visual_sw:
                 if SolarAnt.inUturn:
