@@ -30,11 +30,16 @@ class ROS_image():
 
         self.cameraFail = 0
 
-        try:self.listener()
+        try:
+            self.listener()
+            self.CameraCondition = rospy.Subscriber("CameraCondition", String, self.camera_callback)
         except: raise BaseException("ROS Subscriber Error")
         
     def listener(self):rospy.Subscriber("image",Image,self.img_callback)     
     def img_callback(self,data): self.raw_image=self.bridge.imgmsg_to_cv2(data,desired_encoding="passthrough")
+    def camera_callback(self,msg):
+        if msg.data == "fail":self.cameraFail = -1
+        elif msg.data == "solve":self.cameraFail = 0
 
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
@@ -187,7 +192,6 @@ class Robot():
     def front_callback(self,msg): self.State = self.State._replace(Fall=msg.data) 
     #def pose_callback(self,msg): self.IMU = self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
         
-        
 
     def Move(self): 
         print("------",self.State.Angle) 
@@ -276,9 +280,14 @@ if __name__ == "__main__":
 
             if RosImage.cameraFail == 3:
                 SolarAnt.newVelocity(0,0)
-                print("Camera Fail")
+                print("Camera Fail(Lines are incorrect)")
 
-            if SolarAnt.visual_sw:
+            elif RosImage.cameraFail == -1:
+                SolarAnt.newVelocity(0,0)
+                print("Camera Fail(FOD)")
+
+
+            elif SolarAnt.visual_sw:
                 if SolarAnt.inUturn:
                     SolarAnt.Uturn()
                 else:
@@ -291,6 +300,7 @@ if __name__ == "__main__":
                 SolarAnt.flag = 0
                 SolarAnt.reverse = 1
                 SolarAnt.side = 5
+                RosImage.cameraFail = 0
             rospy.loginfo(SolarAnt.State)
             
         cv2.imshow("draw",view)
