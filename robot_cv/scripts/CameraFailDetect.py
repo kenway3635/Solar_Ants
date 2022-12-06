@@ -1,3 +1,9 @@
+#! /usr/bin/python
+# -*- coding:utf-8 -*-
+
+
+
+from unittest.result import failfast
 import cv2
 import numpy as np
 import time
@@ -24,7 +30,8 @@ class ROS_image():
             self.listener()
         except: raise BaseException("ROS Subscriber Error")
     def listener(self):rospy.Subscriber("image",Image,self.img_callback)     
-    def img_callback(self,data): self.raw_image=self.bridge.imgmsg_to_cv2(data,desired_encoding="passthrough")
+    def img_callback(self,data): 
+        self.raw_image=self.bridge.imgmsg_to_cv2(data,desired_encoding="passthrough")
     
     def line_detect(self, minlineLength = 60 , maxlineGap = 50):
         self.use_image = self.raw_image.copy()
@@ -56,20 +63,27 @@ class ROS_image():
             pass
         return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     def CameraFail(self):
-        rospy.init_node('CameraDetect', anonymous=True)
-        if not rospy.is_shutdown():
-            print("fail")
-            self.pub.publish("fail")
+        print("fail")
+        self.pub.publish("fail")
 
 if __name__ == "__main__":
+
+    fail_time = 0
+    max_val = 0
+    rospy.init_node("anomaly_detect" , anonymous=True)
     RosImage = ROS_image()
     RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8)
+    
+    RosImage.line_detect()
+    time.sleep(1)
     img1 = RosImage.line_detect()
     blur1 = cv2.GaussianBlur(img1,(5,5),0)
-    while True:
+    while  not rospy.is_shutdown():
         img2 = RosImage.line_detect()
         blur2 = cv2.GaussianBlur(img2,(5,5),0)
-
+        blur1 = cv2.resize(blur1,(320,180))
+        blur2 = cv2.resize(blur2,(320,180))
+        #print(blur1.shape , blur2.shape)
         result = cv2.absdiff(blur1, blur2)
 
         #cv2.imshow("1",blur1)
@@ -83,10 +97,15 @@ if __name__ == "__main__":
         shift_sum = sum(map(sum, shift_value))
         diff = shift_sum / result.size + 128#-128~128
 
-        print(diff)
+        #print(diff)
 
-        if diff > 85:
+        if diff > 70:
             RosImage.CameraFail()
+            fail_time+=1
+            print(fail_time)
+        if diff > max_val:
+            print(max_val)
+            max_val = diff
         
         img1 = img2.copy()
         blur1 = blur2.copy()
