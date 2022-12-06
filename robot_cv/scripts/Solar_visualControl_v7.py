@@ -27,22 +27,25 @@ class ROS_image():
             
         self.raw_image = np.zeros((180,320,3) , dtype=np.uint8)
         self.use_image = None
-        self.store_image = None
 
         self.cameraFail = 0
 
         try:
             self.listener()
+            self.CameraCondition = rospy.Subscriber("CameraCondition", String, self.camera_callback)
         except: raise BaseException("ROS Subscriber Error")
         
     def listener(self):rospy.Subscriber("image",Image,self.img_callback)     
     def img_callback(self,data): self.raw_image=self.bridge.imgmsg_to_cv2(data,desired_encoding="passthrough")
+    def camera_callback(self,msg):
+        if msg.data == "fail":self.cameraFail = -1
+        elif msg.data == "solve":self.cameraFail = 0
 
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
     
         self.use_image = cv2.cvtColor(self.use_image,cv2.COLOR_BGR2GRAY)
-        cv2.imshow("GRAY",self.use_image)
+        cv2.imshow("HSV",self.use_image)
         #self.use_image = cv2.inRange(self.use_image,(0,0,150),(100,100,255))
         #cv2.imshow("delete",self.use_image)
         self.use_image = cv2.GaussianBlur(self.use_image,(3,3),sigmaX=1) 
@@ -51,25 +54,7 @@ class ROS_image():
         self.use_image = cv2.dilate(self.use_image,self.kernel_dilate,iterations=2)
         self.use_image = cv2.erode(self.use_image , self.kernel_erode , iterations=1)
         #self.use_image = cv2.morphologyEx(self.use_image,cv2.MORPH_CLOSE,self.kernel,iterations=1 )
-    def camera_detect(self):
-        img1 = cv2.cvtColor(self.store_image, cv2.COLOR_BGR2GRAY)
-        img2 = cv2.cvtColor(self.raw_image, cv2.COLOR_BGR2GRAY)
-        img1 = cv2.GaussianBlur(img1,(5,5),0)
-        img2 = cv2.GaussianBlur(img2,(5,5),0)
-        result = cv2.absdiff(img1, img2)
-        cv2.imshow("diffShow",result)
-
-        reduce_matrix = np.full((result.shape[0], result.shape[1]), 128)
-
-        shift_value = result - reduce_matrix
-        shift_sum = sum(map(sum, shift_value))
-        diff = shift_sum / result.size + 128#-128~128
-
-        if diff > 85:
-            self.cameraFail = -1
-
-        self.store_image = self.raw_image.copy()
-
+        
     def line_detect(self,minlineLength = 60 , maxlineGap = 50, inUturn = False): 
         #self.use_image = cv2.bitwise_not(self.use_image)
         cv2.imshow("test",self.use_image)
@@ -136,8 +121,7 @@ class ROS_image():
                 angle = 0 if not len(angleList)  else sum(angleList)/len(angleList)   
                 detectable = True if angle else False
                 
-                if aq.enqueue(angle,self) : self.cameraFail += 1
-                else : self.cameraFail = 0
+                aq.enqueue(angle)
         
         except: 
             angle = 0
@@ -161,13 +145,11 @@ class anglequeue :
         self.size = 3
         self.q = [0]
     def enqueue(self,val):
-        if len(self.q) > self.size : self.q.pop(0)
-        if -15 <(abs(val) - self.get()) < 15:
-            self.q.append(val)
-            return 0
+        if -15 <(abs(val) - self.get()) < 15 : self.q.append(val)
         else: 
             print(abs(val) , self.get(),self.q)
-            return 1
+            #input()
+        if len(self.q) > self.size : self.q.pop(0) 
     def get(self) : 
         angle = weight = 0
         for i in self.q:
@@ -279,16 +261,15 @@ if __name__ == "__main__":
     rospy.init_node("visualControl" , anonymous=True)
 
     SolarAnt = Robot(enhance_factor=float(parser.parse_args().speed) if parser.parse_args().speed else 1)
-    RosImage = ROS_image() 
+    RosImage =ROS_image() 
     aq = anglequeue()
 
     RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8)
-    RosImage.store_image = RosImage.raw_image.copy()
     view = RosImage.use_image.copy()
     while not rospy.is_shutdown(): 
             
         if RosImage.raw_image.any() == True:
-            RosImage.camera_detect()
+            
             RosImage.use_image = RosImage.raw_image.copy()
 
             RosImage.preProcessing() 
@@ -297,21 +278,21 @@ if __name__ == "__main__":
             SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
 
+            if RosImage.cameraFail == 3:
+                SolarAnt.newVelocity(0,0)
+                print("Camera Fail(Lines are incorrect)")
 
-            if SolarAnt.visual_sw:
-                if RosImage.cameraFail == 3:
-                    SolarAnt.newVelocity(0,0)
-                    print("Camera Fail(Lines are incorrect)")
+            elif RosImage.cameraFail == -1:
+                SolarAnt.newVelocity(0,0)
+                print("Camera Fail(FOD)")
 
-                elif RosImage.cameraFail == -1:
-                    SolarAnt.newVelocity(0,0)
-                    print("Camera Fail(FOD)")
-                
-                elif SolarAnt.inUturn:
+
+            elif SolarAnt.visual_sw:
+                if SolarAnt.inUturn:
                     SolarAnt.Uturn()
                 else:
                     SolarAnt.Move() 
-            else:
+            else :
                 print("manual mode")
                 SolarAnt.inUturn = False
                 SolarAnt.UturnState = 1
