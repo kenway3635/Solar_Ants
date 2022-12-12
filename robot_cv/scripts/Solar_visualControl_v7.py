@@ -12,8 +12,6 @@ from collections import namedtuple
 import argparse , time  
 import threading 
 
-
-import math
 # ---------- ROS Image subscriber ------------
 class ROS_image(): 
     def __init__(self): 
@@ -27,25 +25,23 @@ class ROS_image():
             
         self.raw_image = np.zeros((180,320,3) , dtype=np.uint8)
         self.use_image = None
+        self.store_image = None
 
         self.cameraFail = 0
 
         try:
             self.listener()
-            self.CameraCondition = rospy.Subscriber("CameraCondition", String, self.camera_callback)
         except: raise BaseException("ROS Subscriber Error")
         
     def listener(self):rospy.Subscriber("image",Image,self.img_callback)     
     def img_callback(self,data): self.raw_image=self.bridge.imgmsg_to_cv2(data,desired_encoding="passthrough")
-    def camera_callback(self,msg):
-        if msg.data == "fail":self.cameraFail = -1
-        elif msg.data == "solve":self.cameraFail = 0
+
 
     def preProcessing(self): 
         #self.use_image = self.raw_image.copy() 
     
         self.use_image = cv2.cvtColor(self.use_image,cv2.COLOR_BGR2GRAY)
-        cv2.imshow("HSV",self.use_image)
+        cv2.imshow("GRAY",self.use_image)
         #self.use_image = cv2.inRange(self.use_image,(0,0,150),(100,100,255))
         #cv2.imshow("delete",self.use_image)
         self.use_image = cv2.GaussianBlur(self.use_image,(3,3),sigmaX=1) 
@@ -139,6 +135,35 @@ class ROS_image():
 
         #return detectable , angle 
         return detectable , acc_angle , view
+    
+    def CameraFailReset(self):
+        self.store_image = self.raw_image.copy()
+        self.store_image = cv2.resize(self.store_image,(320,180))
+        self.store_image = cv2.cvtColor(self.store_image, cv2.COLOR_BGR2GRAY)
+        self.store_image = cv2.GaussianBlur(self.store_image,(3,3),sigmaX=1)
+        self.cameraFail = 0
+
+
+    def CameraFailDetect(self):
+        img = self.raw_image.copy()
+        img = cv2.resize(img,(320,180))
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        img = cv2.GaussianBlur(img,(3,3),sigmaX=1)
+        result = cv2.absdiff(self.store_image, img)
+        cv2.imshow("diffShow",result)
+        reduce_matrix = np.full((result.shape[0], result.shape[1]), 128)
+
+        shift_value = result - reduce_matrix
+        shift_sum = sum(map(sum, shift_value))
+        diff = shift_sum / result.size + 128
+
+        if diff > 70:
+            self.cameraFail = -1
+        else:
+            if self.cameraFail == -1:
+                print("Camera Fail be Solved")
+                self.cameraFail = 0
+            self.store_image = img.copy()
 
 class anglequeue : 
     def __init__(self):
@@ -263,13 +288,15 @@ if __name__ == "__main__":
     SolarAnt = Robot(enhance_factor=float(parser.parse_args().speed) if parser.parse_args().speed else 1)
     RosImage =ROS_image() 
     aq = anglequeue()
-
+    time.sleep(1)
+    RosImage.CameraFailReset()
+    
     RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8)
     view = RosImage.use_image.copy()
     while not rospy.is_shutdown(): 
             
         if RosImage.raw_image.any() == True:
-            
+            RosImage.CameraFailDetect()
             RosImage.use_image = RosImage.raw_image.copy()
 
             RosImage.preProcessing() 
@@ -281,18 +308,21 @@ if __name__ == "__main__":
             if RosImage.cameraFail == 3:
                 SolarAnt.newVelocity(0,0)
                 print("Camera Fail(Lines are incorrect)")
+                time.sleep(1)
 
             elif RosImage.cameraFail == -1:
                 SolarAnt.newVelocity(0,0)
                 print("Camera Fail(FOD)")
+                time.sleep(1)
 
 
             elif SolarAnt.visual_sw:
                 if SolarAnt.inUturn:
                     SolarAnt.Uturn()
                 else:
-                    SolarAnt.Move() 
-            else :
+                    SolarAnt.Move()
+
+            if not SolarAnt.visual_sw:
                 print("manual mode")
                 SolarAnt.inUturn = False
                 SolarAnt.UturnState = 1
@@ -300,7 +330,9 @@ if __name__ == "__main__":
                 SolarAnt.flag = 0
                 SolarAnt.reverse = 1
                 SolarAnt.side = 5
-                RosImage.cameraFail = 0
+                RosImage.CameraFailReset()
+                time.sleep(1)
+
             rospy.loginfo(SolarAnt.State)
             
         cv2.imshow("draw",view)
