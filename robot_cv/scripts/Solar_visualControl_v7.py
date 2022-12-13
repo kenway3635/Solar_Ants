@@ -131,6 +131,7 @@ class ROS_image():
         self.store_image = cv2.cvtColor(self.store_image, cv2.COLOR_BGR2GRAY)
         self.store_image = cv2.GaussianBlur(self.store_image,(3,3),sigmaX=1)
         self.cameraFail = 0
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!reset")
 
 
     def CameraFailDetect(self):
@@ -145,14 +146,16 @@ class ROS_image():
         shift_value = result - reduce_matrix
         shift_sum = sum(map(sum, shift_value))
         diff = shift_sum / result.size + 128
-
-        if diff > 70:
+        cv2.imshow("store",self.store_image)
+        print("diff: ", diff)
+        if diff > 50:
             self.cameraFail = -1
         else:
             if self.cameraFail == -1:
                 print("Camera Fail be Solved")
                 self.cameraFail = 0
             self.store_image = img.copy()
+            
 
 class anglequeue : 
     def __init__(self):
@@ -180,7 +183,7 @@ class Robot():
         self.reverse = 1
         self.inUturn = False 
         self.UturnState = 1
-        self.side = 5
+        self.side = 8
         self.IR_left,self.IR_Right = None ,None 
         self.enhance_factor = enhance_factor
         #self.IMU = namedtuple("IMU",["x","y","theta"])(None,None,None)
@@ -244,7 +247,7 @@ class Robot():
                 rospy.loginfo(" Utrun complete ! ")
                 self.flag = self.flag+1 if self.visual_sw else 0
                 self.reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
-                self.side = 5
+                self.side = 8
         elif self.UturnState == 5:
             if self.State.Angle > 20 :
                 self.UturnState = 6
@@ -285,7 +288,7 @@ if __name__ == "__main__":
     while not rospy.is_shutdown(): 
             
         if RosImage.raw_image.any() == True:
-            RosImage.CameraFailDetect()
+            
             RosImage.use_image = RosImage.raw_image.copy()
 
             RosImage.preProcessing() 
@@ -293,16 +296,16 @@ if __name__ == "__main__":
             SolarAnt.State = SolarAnt.State._replace(Line=line_detectable,Angle=line_angle)
             SolarAnt.linePub.publish(SolarAnt.State.Line)
             #print(f"line_detect {line_detectable} , line angle {line_angle}")
-
+            RosImage.CameraFailDetect()
             if RosImage.cameraFail == 3:
                 SolarAnt.newVelocity(0,0)
                 print("Camera Fail(Lines are incorrect)")
-                time.sleep(1)
-
+                #time.sleep(1)
+                                                                                                                                              
             elif RosImage.cameraFail == -1:
                 SolarAnt.newVelocity(0,0)
                 print("Camera Fail(FOD)")
-                time.sleep(1)
+                #time.sleep(1)
 
 
             elif SolarAnt.visual_sw:
@@ -312,15 +315,15 @@ if __name__ == "__main__":
                     SolarAnt.Move()
 
             if not SolarAnt.visual_sw:
-                print("manual mode")
+                print("not camera mode")
                 SolarAnt.inUturn = False
                 SolarAnt.UturnState = 1
                 SolarAnt.newVelocity(0,0)
                 SolarAnt.flag = 0
                 SolarAnt.reverse = 1
-                SolarAnt.side = 5
+                SolarAnt.side = 8
                 RosImage.CameraFailReset()
-                time.sleep(1)
+                #time.sleep(1)
 
             rospy.loginfo(SolarAnt.State)
             
