@@ -37,13 +37,9 @@ class ROS_image():
     def img_callback(self,data): self.raw_image=self.bridge.imgmsg_to_cv2(data,desired_encoding="passthrough")
 
 
-    def preProcessing(self): 
-        #self.use_image = self.raw_image.copy() 
-    
+    def preProcessing(self):     
         self.use_image = cv2.cvtColor(self.use_image,cv2.COLOR_BGR2GRAY)
-        cv2.imshow("GRAY",self.use_image)
-        #self.use_image = cv2.inRange(self.use_image,(0,0,150),(100,100,255))
-        #cv2.imshow("delete",self.use_image)
+        #cv2.imshow("GRAY",self.use_image)
         self.use_image = cv2.GaussianBlur(self.use_image,(3,3),sigmaX=1) 
         #self.use_image = cv2.filter2D(self.use_image,-1,self.sobel_kernel,delta=0)
         self.use_image = cv2.Canny(self.use_image,150,225,apertureSize = 3 ,L2gradient= True) 
@@ -53,10 +49,9 @@ class ROS_image():
         
     def line_detect(self,minlineLength = 60 , maxlineGap = 50, inUturn = False): 
         #self.use_image = cv2.bitwise_not(self.use_image)
-        cv2.imshow("test",self.use_image)
+        cv2.imshow("processed",self.use_image)
         linePoint = cv2.HoughLinesP(self.use_image,1,np.pi/180 , 
-                                    50,None,minlineLength,maxlineGap) 
-        #print("test: linepoint",linePoint)
+                                    50,None,minlineLength,maxlineGap)
         view = self.raw_image.copy()
         try: 
             # find the longest line in this frame 
@@ -69,14 +64,10 @@ class ROS_image():
                 
                     if abs(y2-y1) >  abs(x2-x1) : 
                         if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
-                            
-                            #cv2.line(raw_image,(x1,y1),(x2,y2),(0,255,0),5)
-                            # cv2.line(self.raw_image , (x1,y1),(x2,y2),(0,255,0),5) 
                             cv2.line(view , (x1,y1),(x2,y2),(0,255,0),5) 
                             cal_angle= math.atan2(x2-x1,abs(y2-y1)+0.001) * 57.3
                             if y2-y1<0:
                                 cal_angle = cal_angle*(-1)
-                            #print("x2-x1 = ",x2-x1,"y2-y1 = ",y2-y1)
                             angleList.append(cal_angle)
                 if len(angleList):
                     self.cameraFail = 0
@@ -132,8 +123,6 @@ class ROS_image():
                 acc_angle = 0
             
         
-
-        #return detectable , angle 
         return detectable , acc_angle , view
     
     def CameraFailReset(self):
