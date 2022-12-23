@@ -148,13 +148,14 @@ class ROS_image():
         diff = shift_sum / result.size + 128
         cv2.imshow("store",self.store_image)
         print("diff: ", diff)
-        if diff > 50:
+        if diff > 40:
             self.cameraFail = -1
         else:
             if self.cameraFail == -1:
                 print("Camera Fail be Solved")
                 self.cameraFail = 0
-            self.store_image = img.copy()
+            if diff < 20:
+                self.store_image = img.copy()
             
 
 class anglequeue : 
