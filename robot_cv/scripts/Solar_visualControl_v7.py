@@ -25,12 +25,11 @@ class ROS_image():
             
         self.raw_image = np.zeros((180,320,3) , dtype=np.uint8)
         self.use_image = None
-        self.store_image = None
+        self.store_image = None # For "foreign object enter" detect
 
-        self.cameraFail = 0
+        self.cameraFail = 0 # 0:Normal, 1~3:Lines are incorrect, -1:Foreign object enter
 
-        try:
-            self.listener()
+        try: self.listener()
         except: raise BaseException("ROS Subscriber Error")
         
     def listener(self):rospy.Subscriber("image",Image,self.img_callback)     
@@ -49,7 +48,7 @@ class ROS_image():
         
     def line_detect(self,minlineLength = 60 , maxlineGap = 50, inUturn = False): 
         #self.use_image = cv2.bitwise_not(self.use_image)
-        cv2.imshow("processed",self.use_image)
+        cv2.imshow("preProcessed",self.use_image)
         linePoint = cv2.HoughLinesP(self.use_image,1,np.pi/180 , 
                                     50,None,minlineLength,maxlineGap)
         view = self.raw_image.copy()
@@ -59,9 +58,8 @@ class ROS_image():
             
             angleList = []
             
-            if not inUturn:
+            if not inUturn: # in Move, only one direction's lines
                 for x1,y1,x2,y2  in Line_set:
-                
                     if abs(y2-y1) >  abs(x2-x1) : 
                         if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
                             cv2.line(view , (x1,y1),(x2,y2),(0,255,0),5) 
@@ -78,9 +76,8 @@ class ROS_image():
                     self.cameraFail += 1
                     detectable = False
 
-            else:
+            else: # in Uturn, both two direction's lines
                 for x1,y1,x2,y2  in Line_set:
-                
                     if abs(y2-y1) >  abs(x2-x1) : 
                         if math.sqrt((x2-x1)**2 + (y2-y1)**2) > 100: 
                             cv2.line(view , (x1,y1),(x2,y2),(0,255,0),5) 
@@ -91,7 +88,7 @@ class ROS_image():
                             cv2.line(view , (x1,y1),(x2,y2),(0,255,255),5) 
                             cal_angle = 90 - abs(math.atan2(x2-x1,abs(y2-y1)+0.001)) * 57.3
                             angleList.append(cal_angle)
-                if len(angleList) > 3:
+                if len(angleList) > 3: # remove those angles far from average
                     angle_avg = sum(angleList) / len(angleList)
                     i=0
                     while i != len(angleList):
@@ -99,7 +96,7 @@ class ROS_image():
                             angleList.pop(i)
                             i-=1
                         i+=1
-                if len(angleList) < 3:
+                if len(angleList) < 3: # too few correct angles
                     self.cameraFail += 1
                 else:
                     self.cameraFail = 0
@@ -131,7 +128,7 @@ class ROS_image():
         self.store_image = cv2.cvtColor(self.store_image, cv2.COLOR_BGR2GRAY)
         self.store_image = cv2.GaussianBlur(self.store_image,(3,3),sigmaX=1)
         self.cameraFail = 0
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!reset")
+        print("!!!CameraFailReset!!!")
 
 
     def CameraFailDetect(self):
@@ -158,7 +155,7 @@ class ROS_image():
                 self.store_image = img.copy()
             
 
-class anglequeue : 
+class anglequeue :  # store angles
     def __init__(self):
         self.size = 3
         self.q = [0]
@@ -173,7 +170,7 @@ class anglequeue :
         for i in self.q:
             weight+=1
             angle+= abs(i) * weight
-        return angle / (self.size**2 + self.size) * 2
+        return angle / (self.size**2 + self.size) * 2 # Calculate weighted average
 
 #----------- other Subscriber callback function 
 
@@ -182,9 +179,6 @@ class Robot():
         self.visual_sw = False 
         self.flag = 0
         self.reverse = 1
-        self.inUturn = False 
-        self.UturnState = 1
-        self.side = 8
         self.IR_left,self.IR_Right = None ,None 
         self.enhance_factor = enhance_factor
         #self.IMU = namedtuple("IMU",["x","y","theta"])(None,None,None)
@@ -210,6 +204,10 @@ class Robot():
     def front_callback(self,msg): self.State = self.State._replace(Fall=msg.data) 
     #def pose_callback(self,msg): self.IMU = self.IMU._replace(x = msg.x,y=msg.y,theta=msg.theta) 
         
+    def UturnReset(self):
+        self.inUturn = False
+        self.UturnState = 1
+        self.side = 8 # move state in Uturn, move 8 times
 
     def Move(self): 
         print("------",self.State.Angle) 
@@ -233,39 +231,34 @@ class Robot():
     def Uturn(self):
         rospy.loginfo(f"Uturn in {self.UturnState} state")
         print(self.State.Angle)
-        if self.State.Angle == 0 :
+        if self.State.Angle == 0:
             self.newVelocity(0,0.05,self.reverse)
             return
 
-        if self.UturnState != 4:
+        if self.UturnState != 3: #fixed rotational speed
             self.newVelocity(0,0.3,self.reverse)
 
-        if self.UturnState == 6:
+        if self.UturnState == 5:
             if abs(self.State.Angle) < 10:
-                self.inUturn = False
-                self.UturnState = 1
+                self.UturnReset()
                 self.newVelocity(0,0)
                 rospy.loginfo(" Utrun complete ! ")
                 self.flag = self.flag+1 if self.visual_sw else 0
                 self.reverse = (lambda flag : 1 if flag%2 == 0 else -1 )(self.flag)
-                self.side = 8
-        elif self.UturnState == 5:
-            if self.State.Angle > 20 :
-                self.UturnState = 6
         elif self.UturnState == 4:
-            self.newVelocity(0.15,0)
-            self.side -= 1
-            rospy.loginfo(f"move: {self.side}")
-            if self.side == 0:
+            if self.State.Angle > 20 :
                 self.UturnState = 5
         elif self.UturnState == 3:
-            if self.State.Angle < 10:
+            self.newVelocity(0.15,0)
+            self.side -= 1
+            rospy.loginfo(f"move: {8-self.side}")
+            if self.side == 0:
                 self.UturnState = 4
         elif self.UturnState == 2:
-            if self.State.Angle < 25:
+            if self.State.Angle < 10:
                 self.UturnState = 3
-        else:
-            if self.State.Angle > 30:
+        else: #self.UturnState == 1
+            if self.State.Angle > 20:
                 self.UturnState = 2
         
     
@@ -279,9 +272,9 @@ if __name__ == "__main__":
     rospy.init_node("visualControl" , anonymous=True)
 
     SolarAnt = Robot(enhance_factor=float(parser.parse_args().speed) if parser.parse_args().speed else 1)
-    RosImage =ROS_image() 
+    RosImage = ROS_image() 
     aq = anglequeue()
-    time.sleep(1)
+    time.sleep(1) # avoid image is wrong in the beginning
     RosImage.CameraFailReset()
     
     RosImage.use_image = np.zeros((RosImage.height,RosImage.width,3) , dtype=np.uint8)
@@ -301,13 +294,10 @@ if __name__ == "__main__":
             if RosImage.cameraFail == 3:
                 SolarAnt.newVelocity(0,0)
                 print("Camera Fail(Lines are incorrect)")
-                #time.sleep(1)
                                                                                                                                               
             elif RosImage.cameraFail == -1:
                 SolarAnt.newVelocity(0,0)
-                print("Camera Fail(FOD)")
-                #time.sleep(1)
-
+                print("Camera Fail(Foreign object enter)")
 
             elif SolarAnt.visual_sw:
                 if SolarAnt.inUturn:
@@ -316,19 +306,16 @@ if __name__ == "__main__":
                     SolarAnt.Move()
 
             if not SolarAnt.visual_sw:
-                print("not camera mode")
-                SolarAnt.inUturn = False
-                SolarAnt.UturnState = 1
-                SolarAnt.newVelocity(0,0)
+                print("not in camera mode")
                 SolarAnt.flag = 0
                 SolarAnt.reverse = 1
-                SolarAnt.side = 8
+                SolarAnt.newVelocity(0,0)
+                SolarAnt.UturnReset()
                 RosImage.CameraFailReset()
-                #time.sleep(1)
 
             rospy.loginfo(SolarAnt.State)
             
-        cv2.imshow("draw",view)
+        cv2.imshow("line",view)
         if cv2.waitKey(50) & 0xFF == ord("q"): 
             break 
     cv2.destroyAllWindows() 
