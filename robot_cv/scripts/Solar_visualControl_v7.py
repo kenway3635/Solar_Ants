@@ -151,7 +151,7 @@ class ROS_image():
             if self.cameraFail == -1:
                 print("Camera Fail be Solved")
                 self.cameraFail = 0
-            if diff < 20:
+            if diff < 30:
                 self.store_image = img.copy()
             
 
@@ -179,6 +179,7 @@ class Robot():
         self.visual_sw = False 
         self.flag = 0
         self.reverse = 1
+        self.UturnReset()
         self.IR_left,self.IR_Right = None ,None 
         self.enhance_factor = enhance_factor
         #self.IMU = namedtuple("IMU",["x","y","theta"])(None,None,None)
